@@ -9,7 +9,6 @@ notebook_based_docs: true
 package_manager: uv
 pandas_doctests: true
 plot_dependencies: true
-project_description_short: Python package for zero- and first-order continuous timeseries
 project_description_short: gradient aware harmonisation of timeseries
 project_name_human: Python package for zero- and first-order continuous timeseries
 project_name_pip: gradient-aware-harmonisation
