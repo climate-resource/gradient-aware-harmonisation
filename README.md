@@ -1,5 +1,5 @@
 <!--- --8<-- [start:description] -->
-# Python package for zero- and first-order continuous timeseries
+# Gradient-aware-harmonisation 
 
 Python package for zero- and first-order continuous timeseries
 
