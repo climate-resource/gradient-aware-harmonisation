@@ -1,0 +1,17 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v0.11.1
+_src_path: gl:openscm/copier-core-python-repository
+conda_release: true
+email: florence.bockting@climate-resource.com
+include_cli: false
+name: Florence Bockting
+notebook_based_docs: true
+package_manager: uv
+pandas_doctests: true
+plot_dependencies: true
+project_description_short: Python package for zero- and first-order continuous timeseries
+project_name_human: Python package for zero- and first-order continuous timeseries
+project_name_pip: gradient-aware-harmonisation
+project_name_python: gradient_aware_harmonisation
+project_url: https://github.com/climate-resource/gradient-aware-harmonisation
+track_lock_file: true
