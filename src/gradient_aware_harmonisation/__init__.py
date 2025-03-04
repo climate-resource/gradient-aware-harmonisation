@@ -1,5 +1,5 @@
 """
-Python package for zero- and first-order continuous timeseries
+gradient aware harmonisation of timeseries
 """
 
 import importlib.metadata

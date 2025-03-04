@@ -1,7 +1,7 @@
 <!--- --8<-- [start:description] -->
-# Gradient-aware-harmonisation 
+# Python package for zero- and first-order continuous timeseries
 
-Python package for zero- and first-order continuous timeseries
+gradient aware harmonisation of timeseries
 
 **Key info :**
 [![Docs](https://readthedocs.org/projects/gradient-aware-harmonisation/badge/?version=latest)](https://gradient-aware-harmonisation.readthedocs.io)

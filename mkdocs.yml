@@ -1,5 +1,5 @@
 site_name: Python package for zero- and first-order continuous timeseries
-site_description: Python package for zero- and first-order continuous timeseries
+site_description: gradient aware harmonisation of timeseries
 site_url: https://gradient-aware-harmonisation.readthedocs.io
 edit_uri: blob/master/docs/
 
