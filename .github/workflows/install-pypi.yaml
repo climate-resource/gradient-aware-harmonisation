@@ -85,6 +85,7 @@ jobs:
         else
           pytest tests -r a -vv tests
         fi
+      shell: bash
     - name: Install all test dependencies
       run: |
         pip install -r requirements-only-tests-locked.txt
