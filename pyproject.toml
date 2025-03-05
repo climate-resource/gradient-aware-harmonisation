@@ -1,6 +1,6 @@
 [project]
 name = "gradient-aware-harmonisation"
-version = "0.2.1a1"
+version = "0.2.1"
 description = "gradient aware harmonisation of timeseries"
 authors = [
     { name = "Florence Bockting", email = "florence.bockting@climate-resource.com" },
