@@ -69,12 +69,6 @@ jobs:
     - name: Install min test dependencies
       run: |
         pip install -r requirements-only-tests-min-locked.txt
-    - name: HACK - Install Latest PowerShell (so we get v7.3+ that uses .net 7)
-      shell: pwsh
-      run: |
-        dotnet tool install --global PowerShell
-        $content = Get-Content -Path $env:GITHUB_PATH
-        $HOME + "/.dotnet/tools`r`n" + $content | Set-Content -Path $env:GITHUB_PATH -Encoding utf8
     - name: Run tests
       run: |
         # Can't run doctests here because the paths are different.
@@ -83,7 +77,14 @@ jobs:
         # rather than a super thorough integration test.
         # You will have to make sure that your tests run
         # without all the extras installed for this to pass.
-        pytest tests -r a -vv tests
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          dotnet tool install --global PowerShell
+          $content = Get-Content -Path $env:GITHUB_PATH
+          $HOME + "/.dotnet/tools`r`n" + $content | Set-Content -Path $env:GITHUB_PATH -Encoding utf8
+          pytest tests -r a -vv tests
+        else
+          pytest tests -r a -vv tests
+        fi
     - name: Install all test dependencies
       run: |
         pip install -r requirements-only-tests-locked.txt
