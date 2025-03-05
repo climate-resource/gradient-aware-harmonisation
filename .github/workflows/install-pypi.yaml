@@ -28,16 +28,6 @@ jobs:
         install-target: ["gradient-aware-harmonisation", "gradient-aware-harmonisation[locked]"]
     runs-on: "${{ matrix.os }}"
     steps:
-    - name: HACK - Install Latest PowerShell (so we get v7.3+ that uses .net 7)
-      shell: pwsh
-      run: |
-         dotnet tool install --global PowerShell
-         $prependText = $HOME + "/.dotnet/tools"
-         $filePath = $env:GITHUB_PATH
-         $content = Get-Content -Path $filePath
-         $newContent = $prependText + "`r`n" + $content
-         $newContent | Set-Content -Path $filePath -Encoding utf8
-         $newContent
     - name: Set up Python "${{ matrix.python-version }}"
       id: setup-python
       uses: actions/setup-python@v4
@@ -79,6 +69,12 @@ jobs:
     - name: Install min test dependencies
       run: |
         pip install -r requirements-only-tests-min-locked.txt
+    - name: HACK - Install Latest PowerShell (so we get v7.3+ that uses .net 7)
+      shell: pwsh
+      run: |
+        dotnet tool install --global PowerShell
+        $content = Get-Content -Path $env:GITHUB_PATH
+        $HOME + "/.dotnet/tools`r`n" + $content | Set-Content -Path $env:GITHUB_PATH -Encoding utf8
     - name: Run tests
       run: |
         # Can't run doctests here because the paths are different.
