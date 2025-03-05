@@ -77,7 +77,7 @@ jobs:
         # rather than a super thorough integration test.
         # You will have to make sure that your tests run
         # without all the extras installed for this to pass.
-        if ($RUNNER_OS == "Windows" ) {
+        if ($RUNNER_OS = "Windows" ) {
           dotnet tool install --global PowerShell
           $content = Get-Content -Path $env:GITHUB_PATH
           $HOME + "/.dotnet/tools`r`n" + $content | Set-Content -Path $env:GITHUB_PATH -Encoding utf8
