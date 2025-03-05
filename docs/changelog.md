@@ -20,3 +20,7 @@ from the examples given in that link.
 -->
 
 <!-- towncrier release notes start -->
+
+## Python package for zero- and first-order continuous timeseries v0.2.0 (2025-03-05)
+
+No significant changes.
