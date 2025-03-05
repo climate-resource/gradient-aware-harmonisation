@@ -72,7 +72,7 @@ jobs:
     - name: Setup PowerShell
       shell: shell
       run: |
-        if [ "$RUNNER_OS" = "Windows" ]; then
+        if [ "$RUNNER_OS" == "Windows" ]; then
                   dotnet tool install --global PowerShell
                   $content = Get-Content -Path $env:GITHUB_PATH
                   $HOME + "/.dotnet/tools`r`n" + $content | Set-Content -Path $env:GITHUB_PATH -Encoding utf8
