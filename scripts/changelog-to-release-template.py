@@ -33,14 +33,18 @@ def main() -> None:
             continue
 
         if not grab_notes:
-            if line.startswith("## Python package for zero- and first-order continuous timeseries"):
+            if line.startswith(
+                "## Python package for zero- and first-order continuous timeseries"
+            ):
                 grab_notes = True
 
             continue
 
         # We are grabbing notes now
         # If we've reached the next version's notes, break
-        if line.startswith("## Python package for zero- and first-order continuous timeseries"):
+        if line.startswith(
+            "## Python package for zero- and first-order continuous timeseries"
+        ):
             break
 
         latest_version_notes.append(line)
