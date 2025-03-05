@@ -19,7 +19,7 @@ numpy==2.0.2
     #   pandas
 packaging==24.2
     # via matplotlib
-pandas==2.0.0
+pandas==2.2.3
     # via gradient-aware-harmonisation (pyproject.toml)
 pillow==11.1.0
     # via matplotlib
