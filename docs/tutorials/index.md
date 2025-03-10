@@ -6,6 +6,7 @@ You'll learn how to get started with the code in this project.
 
 It is currently empty, but we will aim to:
 
+- [initial tutorial](tutorial.ipynb)
 - Help newcomers with getting started
 - Teach readers about the library by having them write code
 - Inspire confidence through examples that work for everyone, repeatably

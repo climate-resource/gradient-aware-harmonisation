@@ -10,6 +10,8 @@ Points we will aim to cover:
 - Context and background on the library
 - Why it was created
 - Help the reader make connections
+- [Development considerations](explanation_algo.ipynb)
+- [Estimation accuracy](estimation_accuracy.ipynb)
 
 We will aim to avoid writing instructions or technical descriptions here,
 they belong elsewhere.
