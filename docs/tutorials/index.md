@@ -4,9 +4,9 @@ This part of the project documentation
 will focus on a **learning-oriented** approach.
 You'll learn how to get started with the code in this project.
 
-It is currently empty, but we will aim to:
+- [initial tutorial](./initial-tutorial)
 
-- [initial tutorial](tutorial.ipynb)
+It is currently empty, but we will aim to:
 - Help newcomers with getting started
 - Teach readers about the library by having them write code
 - Inspire confidence through examples that work for everyone, repeatably
