@@ -6,7 +6,7 @@ authors = [
     { name = "Florence Bockting", email = "florence.bockting@climate-resource.com" },
 ]
 license = { text = "3-Clause BSD License" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "notebook>=7.3.2",
     "pandas==2.2.3",
