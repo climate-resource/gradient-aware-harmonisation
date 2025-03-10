@@ -6,6 +6,7 @@ Here, we will describe the background of the project,
 as well as reasoning about how it was implemented.
 
 [Development considerations](./development)
+[Sensitivity analysis](./sensitivity-analysis)
 
 Points we will aim to cover:
 
