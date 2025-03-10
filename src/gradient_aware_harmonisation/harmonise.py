@@ -1,91 +1,160 @@
 import numpy as np
+import tensorflow as tf
 
-from typing import Tuple, List, Union
-from gradient_aware_harmonisation.typings import ResDict
+from scipy.interpolate import CubicSpline
+from typing import Tuple, List, Union, Callable, Optional, Any
+from gradient_aware_harmonisation.typings import ResDict, ResAdjustDict
+
+LFlInt = List[Union[int, float]]
 
 
 class Harmonise:
     def __call__(
         self,
-        f1: Tuple[List[Union[int, float]], List[Union[int, float]]],
-        f2: Tuple[List[Union[int, float]], List[Union[int, float]]],
-        x0: float,
+        x: Tuple[LFlInt, LFlInt],
+        y: Tuple[LFlInt, LFlInt],
+        t0: Union[float, int],
+        smooth: float = 1.0,
+        converge_t: Optional[Union[int, float]] = None,
     ) -> ResDict:
-        # compute correction in absolute values
-        (correction_abs, case, idx) = self.test_abs_val(f1, f2, x0)
+        # compute functions
+        f1 = CubicSpline(x[0], y[0])
+        f2 = CubicSpline(x[1], y[1])
 
-        # adjust y-value of f2 if necessary
-        cor_f2 = self.corrected_abs_val_f2(correction_abs, f2)
-        # cut timeseries outside range of interest
-        new_f1, new_f2 = self.cut_timeseries(f1, cor_f2, idx[0], idx[1])
-        # save results in dict
-        res: ResDict = dict(f1=new_f1, f2=new_f2, case=case)
+        # compute derivatives
+        df1 = f1.derivative()
+        df2 = f2.derivative()
+
+        # adjust first-order func (only)
+        match_deriv = self.adjust_func(df1, df2, x[1], t0, inverse=True)
+
+        # adjust zero-order func (only)
+        match_abs = self.adjust_func(f1, f2, x[1], t0)
+
+        # adjust zero-order of adjusted first-order func (full adj)
+        match = self.adjust_func(f1, match_deriv["f2"], x[1], t0)
+
+        # interpolate between full adj and zero-order adjusted func
+        f2_interp = self.f2_interpolate(
+            x[1], match_abs["f2"], match["f2"], smooth=smooth, converge_t=converge_t
+        )
+        df2_interp = f2_interp.derivative()
+
+        # truncate functions
+        res: ResDict = self.truncate_func(
+            [f1, f2, match["f2"], match_abs["f2"], f2_interp],
+            [df1, df2, match["df2"], match_abs["df2"], df2_interp],
+            x,
+            t0,
+        )
+
         return res
 
-    # get index where f_x = x0
-    # if x0 is not covered by f raise value error
-    def idx_x(self, x: List[Union[int, float]], x0: float) -> int:
-        for i in range(len(x) - 1):
+
+    def adjust_func(
+        self,
+        f1: Callable[[Union[int, float]], Union[int, float]],
+        f2: Callable[[Union[int, float, LFlInt]], Union[int, float]],
+        x2: LFlInt,
+        t0: Union[float, int],
+        inverse: bool = False,
+    ) -> ResAdjustDict:
+        diff = f1(t0)-f2(t0)
+        y2_match = f2(x2)+diff
+        if inverse:
+            df2_match = CubicSpline(x2, y2_match)
+            f2_match = df2_match.antiderivative()
+        else:
+            f2_match = CubicSpline(x2, y2_match)
+            df2_match = f2_match.derivative()
+
+        res: ResAdjustDict = dict(f2=f2_match, df2=df2_match)
+
+        return res
+
+
+    # interpolate between zero-order and first-order match
+    def f2_interpolate(
+        self,
+        x2: LFlInt,
+        f2: Callable[[LFlInt], LFlInt],
+        f2_match: Callable[[LFlInt], LFlInt],
+        smooth: float,
+        converge_t: Optional[Union[int, float]],
+    ) -> Callable[[LFlInt], Callable]:
+        if converge_t is None:
+            decay_end = len(f2(x2))
+        else:
+            decay_end = self.idx_x(x2, converge_t)
+
+        # decay function
+        func_decay = tf.keras.optimizers.schedules.CosineDecay(1.0, decay_end)
+        # compute weight
+        k_seq = np.stack([smooth * func_decay(x) for x in range(len(f2(x2)))])
+        # compute adjusted observations
+        y_new = np.stack(
+            [
+                np.mean(np.add(k * f2_match(x2)[i], (1 - k) * f2(x2)[i]))
+                for i, k in enumerate(k_seq)
+            ]
+        )
+        # estimate function
+        f_interpol = CubicSpline(x2, y_new)
+        return f_interpol
+
+
+    def truncate_func(
+        self,
+        f: List[Any],
+        df: List[Any],
+        x: Tuple[LFlInt, LFlInt],
+        t0: Union[int, float],
+    ) -> ResDict:
+        i_x1 = self.idx_x(x[0], t0)
+        i_x2 = self.idx_x(x[1], t0)
+
+        if i_x1 > i_x2:
+            res: ResDict = dict(
+                f1=f[0](x[0])[:i_x1],
+                df1=df[0](x[0])[:i_x1],
+                f2=f[1](x[1])[i_x2:],
+                df2=df[1](x[1])[i_x2:],
+                f2_adj=f[2](x[1])[i_x2:],
+                df2_adj=df[2](x[1])[i_x2:],
+                f2_abs=f[3](x[1])[i_x2:],
+                df2_abs=df[3](x[1])[i_x2:],
+                f2_intpol=f[4](x[1])[i_x2:],
+                df2_intpol=df[4](x[1])[i_x2:],
+                x1=x[0][:i_x1],
+                x2=x[1][i_x2:],
+            )
+        else:
+            res: ResDict = dict(
+                f1=f[0](x[0])[i_x1:],
+                df1=df[0](x[0])[i_x1:],
+                f2=f[1](x[1])[:i_x2],
+                df2=df[1](x[1])[:i_x2],
+                f2_adj=f[2](x[1])[:i_x2],
+                df2_adj=df[2](x[1])[:i_x2],
+                f2_abs=f[3](x[1])[:i_x2],
+                df2_abs=df[3](x[1])[:i_x2],
+                f2_intpol=f[4](x[1])[:i_x2],
+                df2_intpol=df[4](x[1])[:i_x2],
+                x1=x[0][i_x1:],
+                x2=x[1][:i_x2],
+            )
+        return res
+
+
+    def idx_x(self, x: List[Union[int, float]], t0: Union[float, int]) -> int:
+        for i in range(len(x)-1):
             check = False
-            if x[i] <= x0 and x[i + 1] > x0:
+            if x[i] <= t0 and x[i + 1] >= t0:
                 check = True
                 return i
         if check is not True:
             raise ValueError(
-                f"The provided target x0={x0} is not covered by both provided timeseries."
+                f"The provided target t0={t0} is not covered by both provided timeseries."
             )
-
-    # get x,y corresponding to target_x
-    def get_target_xy(
-        self, dat_xy: Tuple[List[Union[int, float]], List[Union[int, float]]], x0: float
-    ) -> Tuple[Tuple[Union[float, int], Union[int, float]], int]:
-        idx = self.idx_x(dat_xy[0], x0=x0)
-        return (dat_xy[0][idx], dat_xy[1][idx]), idx
-
-    # test whether absolute y-values are equal at x0?
-    def test_abs_val(
-        self,
-        f1: Tuple[List[Union[float, int]], List[Union[float, int]]],
-        f2: Tuple[List[Union[int, float]], List[Union[float, int]]],
-        x0: float,
-    ) -> Tuple[float, str, List[int]]:
-        (tx1, ty1), idx_f1 = self.get_target_xy(f1, x0)
-        (tx2, ty2), idx_f2 = self.get_target_xy(f2, x0)
-        if ty1 < ty2:
-            case = "f1(x0) < f2(x0)"
-            abs_val = ty1 - ty2
-        elif ty1 > ty2:
-            case = "f1(x0) > f2(x0)"
-            abs_val = ty1 - ty2
-        elif ty1 == ty2:
-            case = "f1(x0) == f2(x0)"
-            abs_val = 0
-        return abs_val, case, [idx_f1, idx_f2]
-
-    # correct y-value such that f1 and f2 match at x0
-    def corrected_abs_val_f2(
-        self,
-        correction_abs: float,
-        f2: Tuple[List[Union[float, int]], List[Union[float, int]]],
-    ) -> Tuple[List[Union[float, int]], List[Union[float, int]]]:
-        corrected_x_f2 = np.add(f2[1], correction_abs)
-        return f2[0], list(np.squeeze(corrected_x_f2))
-
-    # cut timeseries
-    def cut_timeseries(
-        self,
-        f1: Tuple[List[Union[float, int]], List[Union[float, int]]],
-        f2: Tuple[List[Union[float, int]], List[Union[float, int]]],
-        idx_f1: int,
-        idx_f2: int,
-    ) -> Tuple[List[Union[float, int]], List[Union[float, int]]]:
-        if idx_f1 >= idx_f2:
-            f1_new = (f1[0][:idx_f1], f1[1][:idx_f1])
-            f2_new = (f2[0][idx_f2:], f2[1][idx_f2:])
-        else:
-            f1_new = (f1[0][idx_f1:], f1[1][idx_f1:])
-            f2_new = (f2[0][:idx_f2], f2[1][:idx_f2])
-        return f1_new, f2_new
-
 
 harmonise = Harmonise()
