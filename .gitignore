@@ -8,6 +8,9 @@ docs/api/*
 # pdm stuff
 .pdm-python
 
+# Data sets
+tests/test-data/*.csv
+
 # Databases
 *.db
 
