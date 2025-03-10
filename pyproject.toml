@@ -11,6 +11,8 @@ dependencies = [
     "notebook>=7.3.2",
     "pandas==2.2.3",
     "tensorflow==2.18.0",
+    "tf_keras==2.18.0",
+    "scipy==1.15.2"
 ]
 readme = "README.md"
 classifiers = [
