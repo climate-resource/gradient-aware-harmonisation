@@ -18,6 +18,21 @@ class Harmonise:
         t_converge: Optional[Union[int, float]] = None,
         **kwargs
     ) -> ResDict:
+        """
+        Parameters
+        ----------
+        x : Tuple[LFlInt, LFlInt]
+        y : Tuple[LFlInt, LFlInt]
+        t0 : float
+        smooth : float, default 1.0
+        t_converge : Union[int, float], default None
+        **kwargs : parameters for ``scipy.interpolate.make_interp_spline``
+
+        Returns
+        -------
+        res: ResDict
+
+        """
         # compute functions
         f1 = make_interp_spline(x[0], y[0], **kwargs)
         f2 = make_interp_spline(x[1], y[1], **kwargs)
@@ -36,8 +51,9 @@ class Harmonise:
         match = self.adjust_func(f1, match_deriv["f2"], x[1], t0, **kwargs)
 
         # interpolate between full adj and zero-order adjusted func
+        i_x2 = self.idx_x(x[1], t0)
         f2_interp = self.f2_interpolate(
-            x[1], match_abs["f2"], match["f2"], smooth=smooth, t_converge=t_converge, **kwargs
+            x[1][i_x2:], match_abs["f2"], match["f2"], smooth=smooth, t_converge=t_converge, **kwargs
         )
         df2_interp = f2_interp.derivative()
 
@@ -61,6 +77,24 @@ class Harmonise:
         inverse: bool = False,
         **kwargs
     ) -> ResAdjustDict:
+        """
+        Adjusts f2 such that f2(t0)=f1(t0). Computes f2 via scipy.interpolate.make_interp_spline.
+        If inverse=True, the antiderivative otherwise the derivative of f2 is computed.
+
+        Parameters
+        ----------
+        f1 : Callable[[Union[int, float]], Union[int, float]]
+        f2 : Callable[[Union[int, float, LFlInt]], Union[int, float]]
+        x2 : LFlInt
+        t0 : Union[float, int]
+        inverse : bool, default False
+        **kwargs : parameters for ``scipy.interpolate.make_interp_spline``
+
+        Returns
+        -------
+        res: ResAdjustDict
+
+        """
         diff = f1(t0)-f2(t0)
         y2_match = f2(x2)+diff
         if inverse:
@@ -85,6 +119,25 @@ class Harmonise:
         t_converge: Optional[Union[int, float]],
         **kwargs
     ) -> Callable[[LFlInt], Callable]:
+        """
+        Computes a function as a weighted average between slope+bias-corrected function and bias-corrected function.
+        Weights follow a decay-function which yields in an interpolation from slope+bias corrected function (at t0) to
+        bias corrected function (at t_converge).
+
+        Parameters
+        ----------
+        x2 : LFlInt
+        f2 : Callable[[LFlInt], LFlInt]
+        f2_match : Callable[[LFlInt], LFlInt]
+        smooth : float
+        t_converge : Union[int, float]
+        **kwargs : parameters for ``scipy.interpolate.make_interp_spline``
+
+        Returns
+        -------
+        f_interpol : Callable[[LFlInt], LFlInt]
+
+        """
         if t_converge is None:
             decay_end = len(f2(x2))
         else:
@@ -97,8 +150,7 @@ class Harmonise:
         # compute adjusted observations
         y_new = np.stack(
             [
-                np.mean(np.add(k * f2_match(x2)[i], (1 - k) * f2(x2)[i]))
-                for i, k in enumerate(k_seq)
+                (k * f2_match(x2[i]) + (1-k) * f2(x2[i])) for i, k in enumerate(k_seq)
             ]
         )
         # estimate function
@@ -113,6 +165,27 @@ class Harmonise:
         x: Tuple[LFlInt, LFlInt],
         t0: Union[int, float],
     ) -> ResDict:
+        """
+        Truncates (x,y) data points such that for the historical data, data after t0 are removed and for the
+        predicted data, data before t0 are removed.
+
+        Parameters
+        ----------
+        f : List[Any]
+            list with computed functions
+        df : List[Any]
+            list with first-order derivatives of computed functions
+        x : Tuple[LFlInt, LFlInt]
+            tuple with ([x1,x2,...], [y1,y2,...]) data
+        t0 : Union[int, float]
+            harmonisation time point
+
+        Returns
+        -------
+        res: ResDict
+            dictionary including all (x,y) values for all methods
+
+        """
         i_x1 = self.idx_x(x[0], t0)
         i_x2 = self.idx_x(x[1], t0)
 
@@ -150,11 +223,18 @@ class Harmonise:
 
 
     def idx_x(self, x: List[Union[int, float]], t0: Union[float, int]) -> int:
+        """
+
+        Parameters
+        ----------
+        x : List[Union[int, float]]
+
+        """
         for i in range(len(x)-1):
             check = False
             if x[i] <= t0 and x[i + 1] >= t0:
                 check = True
-                idx0 = i+1
+                idx0 = i#+1
                 break
         if check is not True:
             idx0 = None
