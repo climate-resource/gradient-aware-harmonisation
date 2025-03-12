@@ -185,8 +185,10 @@ def decay_weights(
 
     Parameters
     ----------
-    timeseries_harmonised : Timeseries
+    timeseries_harmonisee : Timeseries
         timeseries of harmonised spline
+    harmonisation_time: Union[int, float]
+        point in time_axis at which harmonise should be matched to target
     convergence_time : Union[int, float]
         time point at which harmonisee should match target function
     decay_method : str

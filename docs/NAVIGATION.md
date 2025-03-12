@@ -7,7 +7,6 @@ See https://oprypin.github.io/mkdocs-literate-nav/
 - [Installation](installation.md)
 - [How-to guides](how-to-guides/index.md)
     - [Do a basic calculation](how-to-guides/basic-calculation.md)
-    - [Run code in a notebook](how-to-guides/run-code-in-a-notebook.py)
 - [Tutorials](tutorials/index.md)
 <!---
     - [Initial tutorial](tutorials/initial-tutorial.py)
