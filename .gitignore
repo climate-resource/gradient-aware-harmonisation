@@ -5,6 +5,11 @@
 docs/api/*
 !docs/api/.gitkeep
 
+# old tutorials
+docs/further-background/development.py
+docs/further-background/sensitivity-analysis.py
+docs/tutorial/initial-tutorial.py
+
 # pdm stuff
 .pdm-python
 
