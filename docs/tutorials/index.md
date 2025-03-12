@@ -4,7 +4,7 @@ This part of the project documentation
 will focus on a **learning-oriented** approach.
 You'll learn how to get started with the code in this project.
 
-- [initial tutorial](./initial-tutorial)
+- [initial tutorial](./initial-tutorial.py)
 
 It is currently empty, but we will aim to:
 - Help newcomers with getting started
