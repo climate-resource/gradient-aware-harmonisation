@@ -5,9 +5,6 @@ will focus on an **understanding-oriented** approach.
 Here, we will describe the background of the project,
 as well as reasoning about how it was implemented.
 
-[Development considerations](development.py)
-[Sensitivity analysis](sensitivity-analysis.py)
-
 Points we will aim to cover:
 
 - Context and background on the library
