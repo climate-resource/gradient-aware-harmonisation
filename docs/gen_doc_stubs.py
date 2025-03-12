@@ -89,7 +89,7 @@ def write_package_page(
         fh.write("\n")
         fh.write(f"::: {package_full_name}")
 
-    package_doc_split = package.__doc__.splitlines()
+    package_doc_split = (None, None) #package.__doc__.splitlines()
     if not package_doc_split[0]:
         summary = package_doc_split[1]
     else:
