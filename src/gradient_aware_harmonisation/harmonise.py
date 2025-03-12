@@ -9,6 +9,9 @@ LFlInt = List[Union[int, float]]
 
 
 class Harmonise:
+    """
+    Class for harmonising functions
+    """
     def __call__(
         self,
         x: Tuple[LFlInt, LFlInt],
@@ -31,7 +34,6 @@ class Harmonise:
         Returns
         -------
         res: ResDict
-
         """
         # compute functions
         f1 = make_interp_spline(x[0], y[0], **kwargs)
@@ -93,7 +95,6 @@ class Harmonise:
         Returns
         -------
         res: ResAdjustDict
-
         """
         diff = f1(t0)-f2(t0)
         y2_match = f2(x2)+diff
@@ -136,7 +137,6 @@ class Harmonise:
         Returns
         -------
         f_interpol : Callable[[LFlInt], LFlInt]
-
         """
         if t_converge is None:
             decay_end = len(f2(x2))
@@ -184,7 +184,6 @@ class Harmonise:
         -------
         res: ResDict
             dictionary including all (x,y) values for all methods
-
         """
         i_x1 = self.idx_x(x[0], t0)
         i_x2 = self.idx_x(x[1], t0)
@@ -228,7 +227,6 @@ class Harmonise:
         Parameters
         ----------
         x : List[Union[int, float]]
-
         """
         for i in range(len(x)-1):
             check = False
