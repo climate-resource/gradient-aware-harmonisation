@@ -1,245 +1,78 @@
 import numpy as np
 import tensorflow as tf
 
-from scipy.interpolate import make_interp_spline
-from typing import Tuple, List, Union, Callable, Optional, Any
-from gradient_aware_harmonisation.typings import ResDict, ResAdjustDict
+from typing import Optional, Union
+from gradient_aware_harmonisation.utils import (
+    Timeseries,
+    compute_splines,
+    harmonise_splines,
+    biased_corrected_harmonisee,
+    interpolate_harmoniser,
+)
 
-LFlInt = List[Union[int, float]]
 
-
-class Harmonise:
+def harmoniser(
+    target_timeseries: Timeseries,
+    harmonisee_timeseries: Timeseries,
+    harmonisation_time: Union[int, float],
+    convergence_time: Optional[Union[int, float]],
+    interpolation_target: str = "original",
+    decay_method: str = "cosine",
+    **kwargs
+):
     """
-    Class for harmonising functions
+    computes the harmonisation of two timeseries such that the harmonisee matches with the target at some
+    specified time point (called harmonisation time)
+
+    Parameters
+    ----------
+    target_timeseries : Timeseries
+        timeseries of target data (to which the harmonisee should be matched)
+    harmonisee_timeseries : Timeseries
+        timeseries of matching data (that should be matched to the target data at harmonisation time)
+    harmonisation_time : Union[int, float]
+        time point at which harmonisee should be matched to the target
+    convergence_time : Optional[Union[int, float]]
+        time point at which the harmonised data should converge towards the prediced data
+    interpolation_target : str, ["original", "bias_corrected"]
+        to which target the interpolated spline should converge: the original predicted data (harmonisee) or the
+        bias-corrected harmonisee (match at harmonisation time wrt zero-order derivative)
+    decay_method : str, ["cosine"]
+        decay function used to decay weights in the weighted sum of the interpolation spline
+    **kwargs
+        keyword arguments passed to make_interp_spline
     """
-    def __call__(
-        self,
-        x: Tuple[LFlInt, LFlInt],
-        y: Tuple[LFlInt, LFlInt],
-        t0: Union[float, int],
-        smooth: float = 1.0,
-        t_converge: Optional[Union[int, float]] = None,
-        **kwargs
-    ) -> ResDict:
-        """
-        Parameters
-        ----------
-        x : Tuple[LFlInt, LFlInt]
-        y : Tuple[LFlInt, LFlInt]
-        t0 : float
-        smooth : float, default 1.0
-        t_converge : Union[int, float], default None
-        **kwargs : parameters for ``scipy.interpolate.make_interp_spline``
-
-        Returns
-        -------
-        res: ResDict
-        """
-        # compute functions
-        f1 = make_interp_spline(x[0], y[0], **kwargs)
-        f2 = make_interp_spline(x[1], y[1], **kwargs)
-
-        # compute derivatives
-        df1 = f1.derivative()
-        df2 = f2.derivative()
-
-        # adjust first-order func (slope-only)
-        match_deriv = self.adjust_func(df1, df2, x[1], t0, inverse=True, **kwargs)
-
-        # adjust zero-order func (abs-only)
-        match_abs = self.adjust_func(f1, f2, x[1], t0, **kwargs)
-
-        # adjust zero-order of adjusted first-order func (full adj)
-        match = self.adjust_func(f1, match_deriv["f2"], x[1], t0, **kwargs)
-
-        # interpolate between full adj and zero-order adjusted func
-        i_x2 = self.idx_x(x[1], t0)
-        f2_interp = self.f2_interpolate(
-            x[1][i_x2:], match_abs["f2"], match["f2"], smooth=smooth, t_converge=t_converge, **kwargs
-        )
-        df2_interp = f2_interp.derivative()
-
-        # truncate functions
-        res: ResDict = self.truncate_func(
-            [f1, f2, match["f2"], match_abs["f2"], f2_interp],
-            [df1, df2, match["df2"], match_abs["df2"], df2_interp],
-            x,
-            t0,
+    if interpolation_target not in ["original", "bias_corrected"]:
+        raise ValueError(
+            f"interpolation_target must be 'original' or 'bias_corrected'. Got {interpolation_target}"
         )
 
-        return res
+    # compute splines
+    splines = compute_splines(
+        target=target_timeseries, harmonisee=harmonisee_timeseries, **kwargs
+    )
 
+    # compute harmonised spline
+    harmonised_spline = harmonise_splines(
+        splines, harmonisee_timeseries, harmonisation_time, **kwargs
+    )
 
-    def adjust_func(
-        self,
-        f1: Callable[[Union[int, float]], Union[int, float]],
-        f2: Callable[[Union[int, float, LFlInt]], Union[int, float]],
-        x2: LFlInt,
-        t0: Union[float, int],
-        inverse: bool = False,
-        **kwargs
-    ) -> ResAdjustDict:
-        """
-        Adjusts f2 such that f2(t0)=f1(t0). Computes f2 via scipy.interpolate.make_interp_spline.
-        If inverse=True, the antiderivative otherwise the derivative of f2 is computed.
-
-        Parameters
-        ----------
-        f1 : Callable[[Union[int, float]], Union[int, float]]
-        f2 : Callable[[Union[int, float, LFlInt]], Union[int, float]]
-        x2 : LFlInt
-        t0 : Union[float, int]
-        inverse : bool, default False
-        **kwargs : parameters for ``scipy.interpolate.make_interp_spline``
-
-        Returns
-        -------
-        res: ResAdjustDict
-        """
-        diff = f1(t0)-f2(t0)
-        y2_match = f2(x2)+diff
-        if inverse:
-            df2_match = make_interp_spline(x2, y2_match, **kwargs)
-            f2_match = df2_match.antiderivative()
-        else:
-            f2_match = make_interp_spline(x2, y2_match, **kwargs)
-            df2_match = f2_match.derivative()
-
-        res: ResAdjustDict = dict(f2=f2_match, df2=df2_match)
-
-        return res
-
-
-    # interpolate between zero-order and first-order match
-    def f2_interpolate(
-        self,
-        x2: LFlInt,
-        f2: Callable[[LFlInt], LFlInt],
-        f2_match: Callable[[LFlInt], LFlInt],
-        smooth: float,
-        t_converge: Optional[Union[int, float]],
-        **kwargs
-    ) -> Callable[[LFlInt], Callable]:
-        """
-        Computes a function as a weighted average between slope+bias-corrected function and bias-corrected function.
-        Weights follow a decay-function which yields in an interpolation from slope+bias corrected function (at t0) to
-        bias corrected function (at t_converge).
-
-        Parameters
-        ----------
-        x2 : LFlInt
-        f2 : Callable[[LFlInt], LFlInt]
-        f2_match : Callable[[LFlInt], LFlInt]
-        smooth : float
-        t_converge : Union[int, float]
-        **kwargs : parameters for ``scipy.interpolate.make_interp_spline``
-
-        Returns
-        -------
-        f_interpol : Callable[[LFlInt], LFlInt]
-        """
-        if t_converge is None:
-            decay_end = len(f2(x2))
-        else:
-            decay_end = self.idx_x(x2, t_converge)
-
-        # decay function
-        func_decay = tf.keras.optimizers.schedules.CosineDecay(1.0, decay_end)
-        # compute weight
-        k_seq = np.stack([smooth * func_decay(x) for x in range(len(f2(x2)))])
-        # compute adjusted observations
-        y_new = np.stack(
-            [
-                (k * f2_match(x2[i]) + (1-k) * f2(x2[i])) for i, k in enumerate(k_seq)
-            ]
+    # get target of interpolation
+    if interpolation_target == "original":
+        interpol_target = splines.harmonisee[0]
+    if interpolation_target == "bias_corrected":
+        interpol_target = biased_corrected_harmonisee(
+            splines, harmonisee_timeseries, harmonisation_time, **kwargs
         )
-        # estimate function
-        f_interpol = make_interp_spline(x2, y_new, **kwargs)
-        return f_interpol
 
+    # compute interpolation timeseries
+    interpolated_timeseries = interpolate_harmoniser(
+        interpol_target,
+        harmonised_spline,
+        harmonisee_timeseries,
+        convergence_time,
+        harmonisation_time,
+        decay_method,
+    )
 
-    def truncate_func(
-        self,
-        f: List[Any],
-        df: List[Any],
-        x: Tuple[LFlInt, LFlInt],
-        t0: Union[int, float],
-    ) -> ResDict:
-        """
-        Truncates (x,y) data points such that for the historical data, data after t0 are removed and for the
-        predicted data, data before t0 are removed.
-
-        Parameters
-        ----------
-        f : List[Any]
-            list with computed functions
-        df : List[Any]
-            list with first-order derivatives of computed functions
-        x : Tuple[LFlInt, LFlInt]
-            tuple with ([x1,x2,...], [y1,y2,...]) data
-        t0 : Union[int, float]
-            harmonisation time point
-
-        Returns
-        -------
-        res: ResDict
-            dictionary including all (x,y) values for all methods
-        """
-        i_x1 = self.idx_x(x[0], t0)
-        i_x2 = self.idx_x(x[1], t0)
-
-        if i_x1 > i_x2:
-            res: ResDict = dict(
-                f1=f[0](x[0])[:int(i_x1+1)],
-                df1=df[0](x[0])[:int(i_x1+1)],
-                f2=f[1](x[1])[i_x2:],
-                df2=df[1](x[1])[i_x2:],
-                f2_adj=f[2](x[1])[i_x2:],
-                df2_adj=df[2](x[1])[i_x2:],
-                f2_abs=f[3](x[1])[i_x2:],
-                df2_abs=df[3](x[1])[i_x2:],
-                f2_intpol=f[4](x[1])[i_x2:],
-                df2_intpol=df[4](x[1])[i_x2:],
-                x1=x[0][:int(i_x1+1)],
-                x2=x[1][i_x2:],
-            )
-        else:
-            res: ResDict = dict(
-                f1=f[0](x[0])[i_x1:],
-                df1=df[0](x[0])[i_x1:],
-                f2=f[1](x[1])[:int(i_x2+1)],
-                df2=df[1](x[1])[:int(i_x2+1)],
-                f2_adj=f[2](x[1])[:int(i_x2+1)],
-                df2_adj=df[2](x[1])[:int(i_x2+1)],
-                f2_abs=f[3](x[1])[:int(i_x2+1)],
-                df2_abs=df[3](x[1])[:int(i_x2+1)],
-                f2_intpol=f[4](x[1])[:int(i_x2+1)],
-                df2_intpol=df[4](x[1])[:int(i_x2+1)],
-                x1=x[0][i_x1:],
-                x2=x[1][:int(i_x2+1)],
-            )
-        return res
-
-
-    def idx_x(self, x: List[Union[int, float]], t0: Union[float, int]) -> int:
-        """
-
-        Parameters
-        ----------
-        x : List[Union[int, float]]
-        """
-        for i in range(len(x)-1):
-            check = False
-            if x[i] <= t0 and x[i + 1] >= t0:
-                check = True
-                idx0 = i#+1
-                break
-        if check is not True:
-            idx0 = None
-            raise ValueError(
-                f"The provided target t0={t0} is not covered by both provided timeseries."
-            )
-        return idx0
-
-
-harmonise = Harmonise()
+    return interpolated_timeseries
