@@ -13,5 +13,4 @@ It is included to demonstrate how to include sub-sections
 and cross-reference them.
 -->
 
-If you want to do a basic calculation,
-see ["How to do a basic calculation"][how-to-do-a-basic-calculation].
+
