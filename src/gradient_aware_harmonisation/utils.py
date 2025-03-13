@@ -288,7 +288,7 @@ def interpolate_timeseries(
 
     return timeseries_interpolated
 
-
+# %% Wrapper
 def compute_splines(target: Timeseries, harmonisee: Timeseries, **kwargs) -> SplinesCollection:
     """
     Converts input arrays into timeseries objects and computes splines

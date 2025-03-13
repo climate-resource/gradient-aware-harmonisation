@@ -1,34 +1,57 @@
 import matplotlib.pyplot as plt
 
+from gradient_aware_harmonisation.utils import Timeseries
+from typing import Union, Optional
+
 
 def plotting(
-    harmonisee_timeseries,
-    target_timeseries,
-    interpolated_timeseries,
-    harmonisation_time,
-    convergence_time,
-):
+    harmonisee_timeseries: Timeseries,
+    target_timeseries: Timeseries,
+    interpolated_timeseries: Timeseries,
+    harmonisation_time: Union[int, float],
+    convergence_time: Optional[Union[int, float]],
+) -> None:
+    """
+    plots the target, original and interpolated timeseries as computed with :func:`gradient_aware_harmonisation.harmonise.harmoniser`
+
+    Parameters
+    ----------
+    harmonisee_timeseries : Timeseries
+        timeseries that should be matched with the target timeseries at the harmonisation time point
+    target_timeseries : Timeseries
+        timeseries that is used for matching the harmonisee at the harmonisation time point
+    interpolated_timeseries : Timeseries
+        compute harmonised timeseries as returned by :func:`gradient_aware_harmonisation.harmonise.harmoniser`
+    harmonisation_time: Union[int, float]
+        time point at which the harmonisee should be matched with the target timeseries
+    convergence_time: Optional[Union[int, float]]
+        time point at which the harmonised timeseries should match again the original predictions of the harmonisee
+
+    Returns
+    -------
+    None
+    """
     plt.figure(figsize=(6, 3))
     plt.plot(
         harmonisee_timeseries.time_axis,
         harmonisee_timeseries.value,
-        label="pred-orig",
+        label="harmonisee",
         linestyle="--",
         color="black",
     )
     plt.plot(
         interpolated_timeseries.time_axis,
         interpolated_timeseries.value,
-        label="pred-intpol",
+        label="harmonised",
     )
     plt.plot(
         target_timeseries.time_axis,
         target_timeseries.value,
-        label="historical",
+        label="target",
         color="red",
     )
     plt.axvline(harmonisation_time, color="black", linestyle="dotted")
     if convergence_time is not None:
         plt.axvline(convergence_time, color="black", linestyle="dotted")
-    plt.legend(handlelength=0.3, fontsize="small", frameon=False, loc="lower left")
+    plt.legend(handlelength=0.3, fontsize="small", frameon=False)
     plt.show()

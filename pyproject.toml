@@ -10,10 +10,11 @@ requires-python = ">=3.11"
 dependencies = [
     "notebook>=7.3.2",
     "pandas==2.2.3",
-    "tensorflow==*",#2.18.0",
+    "numpy==2.0.2",
+    "tensorflow==2.18.0",
     #"tensorflow-io-gcs-filesystem==0.31.0",
-    "tf_keras==*",#2.18.0",
-    "scipy==*"#1.15.2"
+    "tf_keras==2.18.0",
+    "scipy==1.15.2"
 ]
 readme = "README.md"
 classifiers = [
