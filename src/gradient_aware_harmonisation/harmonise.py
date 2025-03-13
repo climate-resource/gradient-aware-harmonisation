@@ -1,9 +1,10 @@
 from typing import Optional, Union
+
 from gradient_aware_harmonisation.utils import (
     Timeseries,
+    biased_corrected_harmonisee,
     compute_splines,
     harmonise_splines,
-    biased_corrected_harmonisee,
     interpolate_harmoniser,
 )
 
@@ -15,10 +16,10 @@ def harmoniser(
     convergence_time: Optional[Union[int, float]],
     interpolation_target: str = "original",
     decay_method: str = "cosine",
-    **kwargs
+    **kwargs,
 ):
     """
-    computes the harmonisation of two timeseries such that the harmonisee matches with the target at some
+    Computes the harmonisation of two timeseries such that the harmonisee matches with the target at some
     specified time point (called harmonisation time)
 
     Parameters

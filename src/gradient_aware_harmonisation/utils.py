@@ -173,7 +173,7 @@ def find_index_convergence_time(
         # pass check (index found)
         check = False
         if (
-            time_values[i] <= harmonisation_time
+            time_values[i] < harmonisation_time
             and time_values[i + 1] >= harmonisation_time
         ):
             check = True
@@ -222,24 +222,39 @@ def decay_weights(
             f"Currently supported values for `decay_method` are 'cosine'. Got {decay_method}."
         )
 
-    total_time_range = len(timeseries_harmonisee.time_axis)
-    idx0 = find_index_convergence_time(timeseries_harmonisee, harmonisation_time)
+    if not np.isin(harmonisation_time, timeseries_harmonisee.time_axis).all():
+        msg = (
+            f"{harmonisation_time=} is not a value in "
+            f"{timeseries_harmonisee.time_axis=}"
+        )
+        raise NotImplementedError(msg)
+
     if convergence_time is None:
-        time_axis = timeseries_harmonisee.time_axis[idx0:]
-        decay_range = len(time_axis)
+        time_interp = timeseries_harmonisee.time_axis[
+            np.where(timeseries_harmonisee.time_axis >= harmonisation_time)
+        ]
+        # decay_range = len(time_axis)
         fill_with_zeros = []
+
     else:
-        idx1 = find_index_convergence_time(timeseries_harmonisee, convergence_time)
-        time_axis = timeseries_harmonisee.time_axis[idx0:idx1]
-        decay_range = len(time_axis)
-        # get length of decay sequence; add zeros to fillup remaining time_axis
-        diff_len = total_time_range - idx1
-        fill_with_zeros = [0.0] * diff_len
+        time_interp = timeseries_harmonisee.time_axis[
+            np.where(
+                np.logical_and(
+                    timeseries_harmonisee.time_axis >= harmonisation_time,
+                    timeseries_harmonisee.time_axis <= convergence_time,
+                )
+            )
+        ]
+
+        time_match_harmonisee = timeseries_harmonisee.time_axis[
+            np.where(timeseries_harmonisee.time_axis > convergence_time)
+        ]
+        fill_with_zeros = np.zeros_like(time_match_harmonisee)
 
     # decay function
     if decay_method == "cosine":
         # TODO: fix this, obviously wrong
-        weight_seq = np.ones(decay_range)
+        weight_seq = np.ones_like(time_interp)
 
     # compute weight
     weight_sequence = np.concatenate((weight_seq, fill_with_zeros))
@@ -279,21 +294,24 @@ def interpolate_timeseries(
     # timeseries harmonised
     # timeseries_harmonised = harmonised(timeseries_harmonisee.time_axis.values)
     # reduce timeseries from harmonisation time point
-    idx0 = find_index_convergence_time(timeseries_harmonisee, harmonisation_time)
 
-    updated_time_axis, values_interpolated = [], []
+    # idx0 = find_index_convergence_time(timeseries_harmonisee, harmonisation_time)
 
-    # TODO: vectorise rather than using loop
-    for i, w in enumerate(decay_weights):
-        #  time_index = len(decay_weights)-i
-        updated_time_axis.append(timeseries_harmonisee.time_axis[idx0 + i])
-        values_interpolated.append(
-            w * harmonised(updated_time_axis[-1])
-            + (1 - w) * harmonisee(updated_time_axis[-1])
+    if not np.isin(harmonisation_time, timeseries_harmonisee.time_axis).all():
+        msg = (
+            f"{harmonisation_time=} is not a value in "
+            f"{timeseries_harmonisee.time_axis=}"
         )
+        raise NotImplementedError(msg)
 
-    updated_time_axis = np.hstack(updated_time_axis)
-    values_interpolated = np.hstack(values_interpolated)
+    updated_time_axis = timeseries_harmonisee.time_axis[
+        np.where(timeseries_harmonisee.time_axis >= harmonisation_time)
+    ]
+    harmonised_values = harmonised(updated_time_axis)
+    harmonisee_values = harmonisee(updated_time_axis)
+    values_interpolated = (
+        decay_weights * harmonised_values + (1 - decay_weights) * harmonisee_values
+    )
 
     timeseries_interpolated = Timeseries(
         time_axis=updated_time_axis,

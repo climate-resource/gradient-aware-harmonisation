@@ -9,6 +9,7 @@ from gradient_aware_harmonisation.harmonise import harmoniser
 from gradient_aware_harmonisation.utils import Timeseries
 
 
+# TODO: add harmonisation_time halfway between points in time axis
 @pytest.mark.parametrize("harmonisation_time", [2015, 2016, 2017])
 @pytest.mark.parametrize("convergence_time", [None, 2030, 2050])
 def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_time):
@@ -39,7 +40,11 @@ def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_ti
     )
 
     # We expect to get out what we put in as it's already harmonised
-    exp = harmonisee
+    exp_indexer = np.where(harmonisee.time_axis >= harmonisation_time)
+    exp = Timeseries(
+        time_axis=harmonisee.time_axis[exp_indexer],
+        values=harmonisee.values[exp_indexer],
+    )
 
     np.testing.assert_allclose(res.time_axis, exp.time_axis)
     np.testing.assert_allclose(res.values, exp.values)
