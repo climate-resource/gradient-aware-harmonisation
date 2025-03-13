@@ -5,7 +5,7 @@
 groups = ["default", "all-dev", "dev", "docs", "full", "plots", "scipy", "tests", "tests-full", "tests-min"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:209235fbec47f7a83837d138db4961d49423a025468f8f0b333cff1e2a5377e4"
+content_hash = "sha256:58950fa700e299f012ae1dcd9aa3fcfd04a27503dc98f0a16770d37d01dccc75"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -128,7 +128,7 @@ name = "attrs"
 version = "24.3.0"
 requires_python = ">=3.8"
 summary = "Classes Without Boilerplate"
-groups = ["all-dev", "dev", "docs"]
+groups = ["default", "all-dev", "dev", "docs"]
 marker = "python_version >= \"3.11\""
 files = [
     {file = "attrs-24.3.0-py3-none-any.whl", hash = "sha256:ac96cd038792094f438ad1f6ff80837353805ac950cd2aa0e0625ef19850c308"},

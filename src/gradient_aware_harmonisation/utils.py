@@ -2,11 +2,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-import scipy as sp
-import scipy.interpolate
 from attrs import define, field
-
-spi = sp.interpolate
 
 
 @define
