@@ -12,17 +12,24 @@ from gradient_aware_harmonisation.utils import Timeseries
 @pytest.mark.parametrize("harmonisation_time", [2015, 2016, 2017])
 @pytest.mark.parametrize("convergence_time", [None, 2030, 2050])
 def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_time):
-    target = Timeseries(time_axis=np.arange(2010, 2017), values=np.arange(7))
-    harmonisee = Timeseries(
-        time_axis=np.arange(2015, 2100),
-        values=np.hstack(([4, 5, 6], np.arange(2100 - 2017))),
-    )
+    # Note: you have to be very careful here to make sure
+    # that the target and harmnoisee are the same in both absolute value and gradient,
+    # even once converted to a spline.
+    # (Hence the very simple set up below, it is tricky to ensure
+    # this equality otherwise)
+    target = Timeseries(time_axis=np.arange(2015, 2100), values=np.arange(2100 - 2015))
+    harmonisee = target
 
     assert harmonisation_time in target.time_axis, "Your test will not work"
     assert harmonisation_time in harmonisee.time_axis, "Your test will not work"
     assert (
         convergence_time is None or convergence_time in harmonisee.time_axis
     ), "Your test will not work"
+
+    np.testing.assert_equal(
+        target.values[target.time_axis == harmonisation_time],
+        harmonisee.values[harmonisee.time_axis == harmonisation_time],
+    )
 
     res = harmoniser(
         target_timeseries=target,
@@ -35,4 +42,4 @@ def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_ti
     exp = harmonisee
 
     np.testing.assert_allclose(res.time_axis, exp.time_axis)
-    np.testing.assert_allclose(res.value, exp.value)
+    np.testing.assert_allclose(res.values, exp.values)

@@ -1,16 +1,31 @@
+from typing import Optional, Union
+
 import numpy as np
 import pandas as pd
 import scipy as sp
 import scipy.interpolate
+from attrs import define, field
 
 spi = sp.interpolate
 
-from typing import Optional, Union
 
-
+@define
 class Timeseries:
+    """
+    Timeseries class
+    """
+
     time_axis: np.array
-    value: np.array
+    values: np.array = field()
+
+    @values.validator
+    def values_validator(self, attribute, value):
+        if value.size != self.time_axis.size:
+            msg = (
+                f"{attribute.name} must have the same size as time_axis. "
+                f"Received {value.size=} {self.time_axis.size=}"
+            )
+            raise ValueError(msg)
 
 
 class Spline:
@@ -59,9 +74,7 @@ def timeseries_to_spline(timeseries: Timeseries, **kwargs) -> Spline:
     spline : Spline
         compute spline from timeseries data
     """
-    return spi.make_interp_spline(
-        timeseries.time_axis.values, timeseries.value.values, **kwargs
-    )
+    return spi.make_interp_spline(timeseries.time_axis, timeseries.values, **kwargs)
 
 
 def derivative(spline: Spline) -> Spline:
@@ -127,8 +140,9 @@ def harmonise_timeseries(
     diff = target(harmonisation_time) - harmonisee(harmonisation_time)
     harmonised_values = harmonisee(timeseries_harmonisee.time_axis) + diff
 
-    harmonised_timeseries: Timeseries = pd.DataFrame(
-        dict(time_axis=timeseries_harmonisee.time_axis.values, value=harmonised_values)
+    harmonised_timeseries = Timeseries(
+        time_axis=timeseries_harmonisee.time_axis,
+        values=harmonised_values,
     )
 
     return harmonised_timeseries
@@ -152,7 +166,7 @@ def find_index_convergence_time(
     found_index : int
         index of the timeseries corresponding to the harmonisation time.
     """
-    time_values = timeseries.time_axis.values
+    time_values = timeseries.time_axis
     # default value
     check = False
     for i in range(len(time_values) - 1):
@@ -208,15 +222,15 @@ def decay_weights(
             f"Currently supported values for `decay_method` are 'cosine'. Got {decay_method}."
         )
 
-    total_time_range = len(timeseries_harmonisee.time_axis.values)
+    total_time_range = len(timeseries_harmonisee.time_axis)
     idx0 = find_index_convergence_time(timeseries_harmonisee, harmonisation_time)
     if convergence_time is None:
-        time_axis = timeseries_harmonisee.time_axis.values[idx0:]
+        time_axis = timeseries_harmonisee.time_axis[idx0:]
         decay_range = len(time_axis)
         fill_with_zeros = []
     else:
         idx1 = find_index_convergence_time(timeseries_harmonisee, convergence_time)
-        time_axis = timeseries_harmonisee.time_axis.values[idx0:idx1]
+        time_axis = timeseries_harmonisee.time_axis[idx0:idx1]
         decay_range = len(time_axis)
         # get length of decay sequence; add zeros to fillup remaining time_axis
         diff_len = total_time_range - idx1
@@ -224,12 +238,11 @@ def decay_weights(
 
     # decay function
     if decay_method == "cosine":
-        raise NotImplementedError
-        # decay_function = tf.keras.optimizers.schedules.CosineDecay(1.0, decay_range)
+        # TODO: fix this, obviously wrong
+        weight_seq = np.ones(decay_range)
 
     # compute weight
-    weight_seq = [decay_function(weight) for weight in range(decay_range)]
-    weight_sequence = np.stack(weight_seq + fill_with_zeros)
+    weight_sequence = np.concatenate((weight_seq, fill_with_zeros))
 
     return weight_sequence
 
@@ -270,19 +283,21 @@ def interpolate_timeseries(
 
     updated_time_axis, values_interpolated = [], []
 
+    # TODO: vectorise rather than using loop
     for i, w in enumerate(decay_weights):
         #  time_index = len(decay_weights)-i
-        updated_time_axis.append(timeseries_harmonisee.time_axis.values[idx0 + i])
+        updated_time_axis.append(timeseries_harmonisee.time_axis[idx0 + i])
         values_interpolated.append(
             w * harmonised(updated_time_axis[-1])
             + (1 - w) * harmonisee(updated_time_axis[-1])
         )
 
-    timeseries_interpolated: Timeseries = pd.DataFrame(
-        dict(
-            time_axis=updated_time_axis,
-            value=values_interpolated,
-        )
+    updated_time_axis = np.hstack(updated_time_axis)
+    values_interpolated = np.hstack(values_interpolated)
+
+    timeseries_interpolated = Timeseries(
+        time_axis=updated_time_axis,
+        values=values_interpolated,
     )
 
     return timeseries_interpolated
