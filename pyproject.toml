@@ -6,14 +6,14 @@ authors = [
     { name = "Florence Bockting", email = "florence.bockting@climate-resource.com" },
 ]
 license = { text = "3-Clause BSD License" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "notebook>=7.3.2",
     "pandas==2.2.3",
-    "tensorflow==2.18.0",
+    "tensorflow==*"#2.18.0",
     #"tensorflow-io-gcs-filesystem==0.31.0",
-    "tf_keras==2.18.0",
-    "scipy==1.15.2"
+    "tf_keras==*"#2.18.0",
+    "scipy==*"#1.15.2"
 ]
 readme = "README.md"
 classifiers = [
@@ -25,10 +25,10 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    #"Programming Language :: Python :: 3",
-    #"Programming Language :: Python :: 3 :: Only",
-    #"Programming Language :: Python :: 3.9",
-    #"Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
