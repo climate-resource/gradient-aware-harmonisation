@@ -1,3 +1,7 @@
+"""
+Key harmonisation function
+"""
+
 from typing import Optional, Union
 
 from gradient_aware_harmonisation.utils import (
@@ -9,7 +13,7 @@ from gradient_aware_harmonisation.utils import (
 )
 
 
-def harmoniser(
+def harmoniser(  # noqa: PLR0913
     target_timeseries: Timeseries,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
@@ -19,30 +23,46 @@ def harmoniser(
     **kwargs,
 ):
     """
-    Computes the harmonisation of two timeseries such that the harmonisee matches with the target at some
+    Harmonise two timeseries
+
+    When we say harmonise, we mean make it
+    such that the harmonisee matches with the target at some
     specified time point (called harmonisation time)
 
     Parameters
     ----------
-    target_timeseries : Timeseries
-        timeseries of target data (to which the harmonisee should be matched)
-    harmonisee_timeseries : Timeseries
-        timeseries of matching data (that should be matched to the target data at harmonisation time)
-    harmonisation_time : Union[int, float]
-        time point at which harmonisee should be matched to the target
-    convergence_time : Optional[Union[int, float]]
-        time point at which the harmonised data should converge towards the prediced data
-    interpolation_target : str, ["original", "bias_corrected"]
-        to which target the interpolated spline should converge: the original predicted data (harmonisee) or the
-        bias-corrected harmonisee (match at harmonisation time wrt zero-order derivative)
-    decay_method : str, ["cosine"]
-        decay function used to decay weights in the weighted sum of the interpolation spline
+    target_timeseries
+        Target timeseries (i.e. what we harmonise to)
+
+    harmonisee_timeseries
+        Harmonisee timeseries (i.e. the timeseries we want to harmonise)
+
+    harmonisation_time
+        Time point at which harmonisee should be matched to the target
+
+    convergence_time
+        Time point at which the harmonised data
+        should converge towards the prediced data.
+
+    interpolation_target
+        Target to which the harmonised timeseries should converge.
+
+        If original, we converge back to harmonisee.
+        If bias-corrected, we converge back to harmonissee
+        having applied a basic constant offset bias correction
+        (see the docs for futher info [TODO put a cross link to a notebook]).
+
+    decay_method
+        Decay function used to decay weights
+        when interpolating between the target and our harmonisation target.
+
     **kwargs
-        keyword arguments passed to make_interp_spline
+        keyword arguments passed to `make_interp_spline`.
     """
     if interpolation_target not in ["original", "bias_corrected"]:
-        raise ValueError(
-            f"interpolation_target must be 'original' or 'bias_corrected'. Got {interpolation_target}"
+        raise ValueError(  # noqa: TRY003
+            "interpolation_target must be 'original' or 'bias_corrected'. "
+            f"Got {interpolation_target=}"
         )
 
     # compute splines
