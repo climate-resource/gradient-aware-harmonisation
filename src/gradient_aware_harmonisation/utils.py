@@ -1,12 +1,11 @@
-import scipy as sp
 import numpy as np
 import pandas as pd
+import scipy as sp
 import scipy.interpolate
-import tensorflow as tf
 
 spi = sp.interpolate
 
-from typing import Union, Optional, Tuple
+from typing import Optional, Union
 
 
 class Timeseries:
@@ -25,7 +24,7 @@ class SplinesCollection:
 
 def convert_to_timeseries(time_axis: np.array, values: np.array) -> Timeseries:
     """
-    converts input into timeseries object
+    Converts input into timeseries object
 
     Parameters
     ----------
@@ -181,7 +180,7 @@ def decay_weights(
     decay_method: str,
 ) -> np.array:
     """
-    compute a sequence of decaying weights according to specified decay method.
+    Compute a sequence of decaying weights according to specified decay method.
 
     Parameters
     ----------
@@ -204,7 +203,6 @@ def decay_weights(
     ValueError
         Currently supported values for `decay_method` are: "cosine"
     """
-
     if decay_method not in ["cosine"]:
         raise ValueError(
             f"Currently supported values for `decay_method` are 'cosine'. Got {decay_method}."
@@ -226,7 +224,8 @@ def decay_weights(
 
     # decay function
     if decay_method == "cosine":
-        decay_function = tf.keras.optimizers.schedules.CosineDecay(1.0, decay_range)
+        raise NotImplementedError
+        # decay_function = tf.keras.optimizers.schedules.CosineDecay(1.0, decay_range)
 
     # compute weight
     weight_seq = [decay_function(weight) for weight in range(decay_range)]
@@ -243,11 +242,11 @@ def interpolate_timeseries(
     decay_weights: np.array,
 ) -> Timeseries:
     """
-    computes timeseries that interpolates between harmonised spline at harmonisation time and target spline at either
+    Computes timeseries that interpolates between harmonised spline at harmonisation time and target spline at either
     the last date of the harmonisee or the specified convergence time.
 
     Parameters
-    ---------
+    ----------
     harmonisee : Spline
         harmonisee spline
     harmonised : Spline
@@ -288,8 +287,11 @@ def interpolate_timeseries(
 
     return timeseries_interpolated
 
+
 # %% Wrapper
-def compute_splines(target: Timeseries, harmonisee: Timeseries, **kwargs) -> SplinesCollection:
+def compute_splines(
+    target: Timeseries, harmonisee: Timeseries, **kwargs
+) -> SplinesCollection:
     """
     Converts input arrays into timeseries objects and computes splines
 
@@ -326,7 +328,7 @@ def interpolate_harmoniser(
     decay_method: str = "cosine",
 ) -> Timeseries:
     """
-    computes an interpolated timeseries which interpolates from the harmonised_spline to the interpolation target
+    Computes an interpolated timeseries which interpolates from the harmonised_spline to the interpolation target
 
     Parameters
     ----------
@@ -373,10 +375,10 @@ def harmonise_splines(
     splines: SplinesCollection,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
-    **kwargs
+    **kwargs,
 ) -> Spline:
     """
-    harmonises two splines by matching a harmonisee to a target spline
+    Harmonises two splines by matching a harmonisee to a target spline
 
     Parameters
     ----------
@@ -424,10 +426,10 @@ def biased_corrected_harmonisee(
     splines: SplinesCollection,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
-    **kwargs
+    **kwargs,
 ) -> Spline:
     """
-    computes the biased corrected spline, i.e. the harmonisee matches the target spline wrt the zero-order
+    Computes the biased corrected spline, i.e. the harmonisee matches the target spline wrt the zero-order
     derivative.
 
     Parameters
@@ -452,6 +454,8 @@ def biased_corrected_harmonisee(
         harmonisee_timeseries,
         harmonisation_time,
     )
-    biased_corrected_spline = timeseries_to_spline(biased_corrected_timeseries, **kwargs)
+    biased_corrected_spline = timeseries_to_spline(
+        biased_corrected_timeseries, **kwargs
+    )
 
     return biased_corrected_spline
