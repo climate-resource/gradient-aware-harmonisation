@@ -13,6 +13,7 @@ from gradient_aware_harmonisation.utils import Timeseries
 @pytest.mark.parametrize("harmonisation_time", [2015, 2016, 2017])
 @pytest.mark.parametrize("convergence_time", [None, 2030, 2050])
 def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_time):
+    pytest.importorskip("scipy")
     # Note: you have to be very careful here to make sure
     # that the target and harmnoisee are the same in both absolute value and gradient,
     # even once converted to a spline.
