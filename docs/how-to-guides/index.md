@@ -12,5 +12,3 @@ You will probably want to remove this bit.
 It is included to demonstrate how to include sub-sections
 and cross-reference them.
 -->
-
-

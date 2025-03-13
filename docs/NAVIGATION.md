@@ -12,7 +12,7 @@ See https://oprypin.github.io/mkdocs-literate-nav/
     - [Initial tutorial](tutorials/initial-tutorial.py)
 -->
 - [Further background](further-background/index.md)
-<!--- 
+<!---
     - [Sensitivity](further-background/sensitivity-analysis.py)
     - [Development ideas](further-background/development.py)
 -->

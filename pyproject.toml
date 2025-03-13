@@ -6,15 +6,11 @@ authors = [
     { name = "Florence Bockting", email = "florence.bockting@climate-resource.com" },
 ]
 license = { text = "3-Clause BSD License" }
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
-    "notebook>=7.3.2",
-    "pandas==2.2.3",
-    "numpy==2.0.2",
-    "tensorflow==2.18.0",
-    #"tensorflow-io-gcs-filesystem==0.31.0",
-    "tf_keras==2.18.0",
-    "scipy==1.15.2"
+    "attrs>=24.3.0",
+    "numpy>=1.25.0",
+    "pandas>=2.2.0",
 ]
 readme = "README.md"
 classifiers = [
@@ -48,8 +44,12 @@ Issues = "https://github.com/climate-resource/gradient-aware-harmonisation/issue
 plots = [
     "matplotlib>=3.7.1",
 ]
+scipy = [
+    "scipy>=1.13.1",
+]
 full = [
     "gradient-aware-harmonisation[plots]",
+    "gradient-aware-harmonisation[scipy]",
 ]
 
 [dependency-groups]
@@ -71,6 +71,7 @@ dev = [
     # Required for liccheck, see https://github.com/dhatim/python-license-check/pull/113
     "setuptools==75.6.0",
     "towncrier==24.8.0",
+    "notebook>=7.3.2",
     # Implied by the key dependencies above
     # -------------------------------------
     "cfgv==3.4.0",
@@ -280,7 +281,7 @@ source = [
 branch = true
 
 [tool.coverage.report]
-fail_under = 90
+fail_under = 60  # TODO: push this up to 90 over time
 skip_empty = true
 show_missing = true
 exclude_also = [

@@ -132,6 +132,9 @@ Additional dependencies can be installed using
     # To add plotting dependencies
     pip install 'gradient-aware-harmonisation[plots]'
 
+    # To add scipy (an optional dependency)
+    pip install 'gradient-aware-harmonisation[scipy]'
+
     # To add all optional dependencies
     pip install 'gradient-aware-harmonisation[full]'
     ```
