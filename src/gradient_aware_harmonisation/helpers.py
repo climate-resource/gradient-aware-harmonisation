@@ -1,7 +1,7 @@
-import matplotlib.pyplot as plt
+from typing import Optional, Union
 
+from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
 from gradient_aware_harmonisation.utils import Timeseries
-from typing import Union, Optional
 
 
 def plotting(
@@ -12,7 +12,7 @@ def plotting(
     convergence_time: Optional[Union[int, float]],
 ) -> None:
     """
-    plots the target, original and interpolated timeseries as computed with :func:`gradient_aware_harmonisation.harmonise.harmoniser`
+    Plots the target, original and interpolated timeseries as computed with :func:`gradient_aware_harmonisation.harmonise.harmoniser`
 
     Parameters
     ----------
@@ -31,6 +31,13 @@ def plotting(
     -------
     None
     """
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "plotting", requirement="matplotlib"
+        ) from exc
+
     plt.figure(figsize=(6, 3))
     plt.plot(
         harmonisee_timeseries.time_axis,
