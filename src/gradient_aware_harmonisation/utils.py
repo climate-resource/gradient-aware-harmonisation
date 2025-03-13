@@ -37,26 +37,6 @@ class SplinesCollection:
     harmonisee: Spline
 
 
-def convert_to_timeseries(time_axis: np.array, values: np.array) -> Timeseries:
-    """
-    Converts input into timeseries object
-
-    Parameters
-    ----------
-    time_axis: np.array
-        sequence of values related to the time axies (e.g., years)
-    values: np.array
-        sequence of values related to the measurements (e.g., C02)
-
-    Returns
-    -------
-    timeseries: Timeseries
-        timeseries object with time_axis and value attribute
-    """
-    timeseries: Timeseries = pd.DataFrame({"time_axis": time_axis, "value": values})
-    return timeseries
-
-
 def timeseries_to_spline(timeseries: Timeseries, **kwargs) -> Spline:
     """
     Estimates splines from timeseries arrays.
@@ -146,45 +126,6 @@ def harmonise_timeseries(
     )
 
     return harmonised_timeseries
-
-
-def find_index_convergence_time(
-    timeseries: Timeseries, harmonisation_time: Union[int, float]
-) -> int:
-    """
-    Finds the index of the harmonised time series corresponding to the given timeseries.
-
-    Parameters
-    ----------
-    timeseries : Timeseries
-        timeseries of format dict(time_axis = np.array, values = np.array)
-    harmonisation_time : Union[int, float]
-        point in time_axis at which harmonise should be matched to target
-
-    Returns
-    -------
-    found_index : int
-        index of the timeseries corresponding to the harmonisation time.
-    """
-    time_values = timeseries.time_axis
-    # default value
-    check = False
-    for i in range(len(time_values) - 1):
-        # pass check (index found)
-        check = False
-        if (
-            time_values[i] < harmonisation_time
-            and time_values[i + 1] >= harmonisation_time
-        ):
-            check = True
-            found_index = i
-            break
-    if check is not True:
-        found_index = None
-        raise ValueError(
-            f"The provided harmonisation_time={harmonisation_time} is not covered by both provided timeseries."
-        )
-    return found_index
 
 
 def decay_weights(
@@ -294,8 +235,6 @@ def interpolate_timeseries(
     # timeseries harmonised
     # timeseries_harmonised = harmonised(timeseries_harmonisee.time_axis.values)
     # reduce timeseries from harmonisation time point
-
-    # idx0 = find_index_convergence_time(timeseries_harmonisee, harmonisation_time)
 
     if not np.isin(harmonisation_time, timeseries_harmonisee.time_axis).all():
         msg = (
