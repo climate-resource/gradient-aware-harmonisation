@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 
+from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
+
 
 @define
 class Timeseries:
@@ -24,16 +26,7 @@ class Timeseries:
             raise ValueError(msg)
 
 
-class Spline:
-    scipy.interpolate.make_interp_spline
-
-
-class SplinesCollection:
-    target: Spline
-    harmonisee: Spline
-
-
-def timeseries_to_spline(timeseries: Timeseries, **kwargs) -> Spline:
+def timeseries_to_spline(timeseries: Timeseries, **kwargs) -> None:
     """
     Estimates splines from timeseries arrays.
 
@@ -50,47 +43,21 @@ def timeseries_to_spline(timeseries: Timeseries, **kwargs) -> Spline:
     spline : Spline
         compute spline from timeseries data
     """
-    return spi.make_interp_spline(timeseries.time_axis, timeseries.values, **kwargs)
+    try:
+        import scipy.interpolate
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "timeseries_to_spline", requirement="scipy"
+        ) from exc
 
-
-def derivative(spline: Spline) -> Spline:
-    """
-    Computes the first derivative of the passed spline function.
-
-    Parameters
-    ----------
-    spline : Spline
-        spline function from data array
-
-    Returns
-    -------
-    spline : Spline
-        1st derivative of spline
-
-    """
-    return spline.derivative()
-
-
-def integrate(spline: Spline) -> Spline:
-    """
-    Compute the antiderivative of the passed spline function.
-
-    Parameters
-    ----------
-    spline : Spline
-        spline function from data array
-
-    Returns
-    -------
-    spline : Spline
-        antiderivative of spline
-    """
-    return spline.antiderivative()
+    return scipy.interpolate.make_interp_spline(
+        timeseries.time_axis, timeseries.values, **kwargs
+    )
 
 
 def harmonise_timeseries(
-    target: Spline,
-    harmonisee: Spline,
+    target: None,
+    harmonisee: None,
     timeseries_harmonisee: Timeseries,
     harmonisation_time: Union[int, float],
 ) -> Timeseries:
@@ -200,8 +167,8 @@ def decay_weights(
 
 
 def interpolate_timeseries(
-    harmonisee: Spline,
-    harmonised: Spline,
+    harmonisee: None,
+    harmonised: None,
     harmonisation_time: Union[int, float],
     timeseries_harmonisee: Timeseries,
     decay_weights: np.array,
@@ -257,9 +224,7 @@ def interpolate_timeseries(
 
 
 # %% Wrapper
-def compute_splines(
-    target: Timeseries, harmonisee: Timeseries, **kwargs
-) -> SplinesCollection:
+def compute_splines(target: Timeseries, harmonisee: Timeseries, **kwargs) -> None:
     """
     Converts input arrays into timeseries objects and computes splines
 
@@ -281,15 +246,13 @@ def compute_splines(
     target_spline = timeseries_to_spline(target, **kwargs)
     harmonisee_spline = timeseries_to_spline(harmonisee, **kwargs)
 
-    splines: SplinesCollection = pd.DataFrame(
-        dict(target=[target_spline], harmonisee=[harmonisee_spline])
-    )
+    splines = pd.DataFrame(dict(target=[target_spline], harmonisee=[harmonisee_spline]))
     return splines
 
 
 def interpolate_harmoniser(
-    interpolation_target: Spline,
-    harmonised_spline: Spline,
+    interpolation_target: None,
+    harmonised_spline: None,
     harmonisee_timeseries: Timeseries,
     convergence_time: Optional[Union[int, float]],
     harmonisation_time: Union[int, float],
@@ -340,11 +303,11 @@ def interpolate_harmoniser(
 
 
 def harmonise_splines(
-    splines: SplinesCollection,
+    splines: None,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
     **kwargs,
-) -> Spline:
+) -> None:
     """
     Harmonises two splines by matching a harmonisee to a target spline
 
@@ -365,8 +328,8 @@ def harmonise_splines(
         harmonised spline (harmonised spline and target have same zero-and first-order derivative at harmonisation time)
     """
     # compute derivatives
-    target_dspline = derivative(splines.target[0])
-    harmonisee_dspline = derivative(splines.harmonisee[0])
+    target_dspline = splines.target[0].derivative()
+    harmonisee_dspline = splines.harmonisee[0].derivative()
 
     # match first-order derivatives
     harmonised_d1_timeseries = harmonise_timeseries(
@@ -375,7 +338,7 @@ def harmonise_splines(
     # compute spline
     harmonised_D1_spline = timeseries_to_spline(harmonised_d1_timeseries, **kwargs)
     # integrate to match zero-order derivative
-    harmonised_d1_spline = integrate(harmonised_D1_spline)
+    harmonised_d1_spline = harmonised_D1_spline.antiderivative()
 
     # match zero-order derivatives
     harmonised_d0d1_timeseries = harmonise_timeseries(
@@ -391,11 +354,11 @@ def harmonise_splines(
 
 
 def biased_corrected_harmonisee(
-    splines: SplinesCollection,
+    splines: None,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
     **kwargs,
-) -> Spline:
+) -> None:
     """
     Computes the biased corrected spline, i.e. the harmonisee matches the target spline wrt the zero-order
     derivative.
