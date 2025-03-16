@@ -136,8 +136,8 @@ def cosine_decay(decay_steps: int, initial_weight: float = 1.0) -> list[float]:
     decay_steps
         number of steps to decay over
 
-    initial_weight, default = 1.
-        starting weight
+    initial_weight
+        starting weight with default = 1.
 
     Returns
     -------

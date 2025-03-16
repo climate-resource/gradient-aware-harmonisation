@@ -10,6 +10,7 @@ requires-python = ">=3.9"
 dependencies = [
     "attrs>=24.3.0",
     "numpy>=1.25.0",
+    "pandas>=2.2.3",
 ]
 readme = "README.md"
 classifiers = [
