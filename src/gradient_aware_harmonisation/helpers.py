@@ -50,19 +50,19 @@ def plotting(
     plt.figure(figsize=(6, 3))
     plt.plot(
         harmonisee_timeseries.time_axis,
-        harmonisee_timeseries.value,
+        harmonisee_timeseries.values,
         label="harmonisee",
         linestyle="--",
         color="black",
     )
     plt.plot(
         interpolated_timeseries.time_axis,
-        interpolated_timeseries.value,
+        interpolated_timeseries.values,
         label="harmonised",
     )
     plt.plot(
         target_timeseries.time_axis,
-        target_timeseries.value,
+        target_timeseries.values,
         label="target",
         color="red",
     )
@@ -70,4 +70,6 @@ def plotting(
     if convergence_time is not None:
         plt.axvline(convergence_time, color="black", linestyle="dotted")
     plt.legend(handlelength=0.3, fontsize="small", frameon=False)
+    plt.xlabel("time axis")
+    plt.ylabel("value")
     plt.show()

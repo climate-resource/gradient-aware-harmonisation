@@ -2,7 +2,7 @@
 Key harmonisation function
 """
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from gradient_aware_harmonisation.utils import (
     Timeseries,
@@ -20,8 +20,8 @@ def harmoniser(  # noqa: PLR0913
     convergence_time: Optional[Union[int, float]],
     interpolation_target: str = "original",
     decay_method: str = "cosine",
-    **kwargs,
-):
+    **kwargs: Any,
+) -> Timeseries:
     """
     Harmonise two timeseries
 
@@ -50,14 +50,21 @@ def harmoniser(  # noqa: PLR0913
         If original, we converge back to harmonisee.
         If bias-corrected, we converge back to harmonissee
         having applied a basic constant offset bias correction
-        (see the docs for futher info [TODO put a cross link to a notebook]).
+        (see the docs for further info TODO put a cross link to a notebook).
 
     decay_method
         Decay function used to decay weights
         when interpolating between the target and our harmonisation target.
+        If 'polynomial' is used an additional argument 'pow' to specify the power
+        is required (should be => 1.)
 
     **kwargs
-        keyword arguments passed to `make_interp_spline`.
+        keyword arguments passed to `make_interp_spline` or 'polynomial_decay'
+
+    Returns
+    -------
+    harmonised timeseries :
+        timeseries of harmonised data set
     """
     if interpolation_target not in ["original", "bias_corrected"]:
         raise ValueError(  # noqa: TRY003
@@ -77,7 +84,7 @@ def harmoniser(  # noqa: PLR0913
 
     # get target of interpolation
     if interpolation_target == "original":
-        interpol_target = splines.harmonisee[0]
+        interpol_target = splines.harmonisee
     if interpolation_target == "bias_corrected":
         interpol_target = biased_corrected_harmonisee(
             splines, harmonisee_timeseries, harmonisation_time, **kwargs
@@ -91,6 +98,7 @@ def harmoniser(  # noqa: PLR0913
         convergence_time,
         harmonisation_time,
         decay_method,
+        **kwargs,
     )
 
     return interpolated_timeseries
