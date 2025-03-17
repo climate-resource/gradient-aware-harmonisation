@@ -4,7 +4,6 @@ Integration tests of `harmonise_splines` function in `utils` module
 
 import numpy as np
 import pytest
-from scipy.interpolate import make_interp_spline
 
 from gradient_aware_harmonisation.utils import Splines, Timeseries, harmonise_splines
 
@@ -100,6 +99,12 @@ def test_harmonise_splines_equal_d0(
     test_criterion,
 ):
     pytest.importorskip("scipy")
+    try:
+        import scipy
+    except ImportError:
+        raise ImportError(  # noqa: TRY003
+            "scipy cannot be imported."
+        )
 
     target = target_func()
     harmonisee = harmonisee_func()
@@ -110,10 +115,10 @@ def test_harmonise_splines_equal_d0(
     )
 
     splines = Splines(
-        target=make_interp_spline(
+        target=scipy.interpolate.make_interp_spline(
             timeseries_target.time_axis, timeseries_target.values
         ),
-        harmonisee=make_interp_spline(
+        harmonisee=scipy.interpolate.make_interp_spline(
             timeseries_harmonisee.time_axis, timeseries_harmonisee.values
         ),
     )
