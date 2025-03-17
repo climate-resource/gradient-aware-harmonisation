@@ -3,22 +3,36 @@ Utility functions
 """
 
 import inspect
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Union, Protocol
 
 import numpy as np
+import numpy.typing as npt
 from attrs import define, field
 
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
 
 
+
+@define
+class Spline(Protocol):
+    """
+    Single spline
+    """
+    def __call__(self, x: npt.NDArray[Any]) -> npt.NDArray[Any]: ...
+
+    def derivative(self) -> Any: ...
+
+    def antiderivative(self) -> Any: ...
+
+
 @define
 class Splines:
     """
-    Spline class
+    Spline class combined (target and harmonisee)
     """
 
-    target: Callable[[Any], Any]
-    harmonisee: Callable[[Any], Any]
+    target: Spline
+    harmonisee: Spline
 
 
 @define
@@ -27,11 +41,11 @@ class Timeseries:
     Timeseries class
     """
 
-    time_axis: np.array
-    values: np.array = field()
+    time_axis: npt.NDArray[Any]
+    values: npt.NDArray[Any] = field()
 
     @values.validator
-    def values_validator(self, attribute, value):
+    def values_validator(self, attribute: Any, value: Any) -> None:
         """
         Validate the values
 
@@ -51,7 +65,7 @@ class Timeseries:
             raise ValueError(msg)
 
 
-def timeseries_to_spline(timeseries: Timeseries, **kwargs) -> None:
+def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> Spline:
     """
     Estimates splines from timeseries arrays.
 
@@ -83,14 +97,16 @@ def timeseries_to_spline(timeseries: Timeseries, **kwargs) -> None:
         f"{key}": kwargs[key] for key in kwargs if key in args_make_interp_spline
     }
 
-    return scipy.interpolate.make_interp_spline(
+    spline = scipy.interpolate.make_interp_spline(
         timeseries.time_axis, timeseries.values, **kwargs_spline
     )
 
+    return spline
+
 
 def harmonise_timeseries(
-    target: None,
-    harmonisee: None,
+    target: Spline,
+    harmonisee: Spline,
     timeseries_harmonisee: Timeseries,
     harmonisation_time: Union[int, float],
 ) -> Timeseries:
@@ -127,7 +143,7 @@ def harmonise_timeseries(
     return harmonised_timeseries
 
 
-def cosine_decay(decay_steps: int, initial_weight: float = 1.0) -> list[float]:
+def cosine_decay(decay_steps: int, initial_weight: float = 1.0) -> npt.NDArray[Any]:
     """
     Compute cosine decay function
 
@@ -160,7 +176,7 @@ def cosine_decay(decay_steps: int, initial_weight: float = 1.0) -> list[float]:
 
 def polynomial_decay(
     decay_steps: int, pow: Union[float, int], initial_weight: float = 1.0
-) -> list[float]:
+) -> npt.NDArray[Any]:
     """
     Compute polynomial decay function
 
@@ -208,8 +224,8 @@ def decay_weights(
     harmonisation_time: Union[int, float],
     convergence_time: Optional[Union[int, float]],
     decay_method: str,
-    **kwargs: dict[Any, Any],
-) -> np.array:
+    **kwargs: Any,
+) -> npt.NDArray[Any]:
     """
     Compute a sequence of decaying weights according to specified decay method.
 
@@ -246,27 +262,27 @@ def decay_weights(
         )
 
     if (decay_method == "polynomial") and ("pow" not in kwargs.keys()):
-        msg = (
+        raise TypeError(  # noqa: TRY003
             "The decay_method='polynomial' expects a 'pow' argument.",
             "Please pass a 'pow' argument greater or equal to 1.",
         )
-        raise TypeError(msg)
 
     if not np.isin(
         np.float32(timeseries_harmonisee.time_axis), np.float32(harmonisation_time)
     ).any():
-        msg = (
+        raise NotImplementedError(
             f"{harmonisation_time=} is not a value in "
             f"{timeseries_harmonisee.time_axis=}"
         )
-        raise NotImplementedError(msg)
+    # initialize variable
+    fill_with_zeros: npt.NDArray[Any]
 
     if convergence_time is None:
         time_interp = timeseries_harmonisee.time_axis[
             np.where(timeseries_harmonisee.time_axis >= harmonisation_time)
         ]
         # decay_range = len(time_axis)
-        fill_with_zeros = []
+        fill_with_zeros = np.array([])
 
     else:
         time_interp = timeseries_harmonisee.time_axis[
@@ -288,20 +304,22 @@ def decay_weights(
     if decay_method == "cosine":
         weight_seq = cosine_decay(len(time_interp))
     elif decay_method == "polynomial":
-        weight_seq = polynomial_decay(len(time_interp), kwargs["pow"])
+        # extract required additional argument
+        pow: Union[float, int] = kwargs["pow"]
+        weight_seq = polynomial_decay(len(time_interp), pow=pow)
 
     # compute weight
-    weight_sequence = np.concatenate((weight_seq, fill_with_zeros))
+    weight_sequence: npt.NDArray[Any] = np.concatenate((weight_seq, fill_with_zeros))
 
     return weight_sequence
 
 
 def interpolate_timeseries(
-    harmonisee: None,
-    harmonised: None,
+    harmonisee: Spline,
+    harmonised: Spline,
     harmonisation_time: Union[int, float],
     timeseries_harmonisee: Timeseries,
-    decay_weights: np.array,
+    decay_weights: npt.NDArray[Any],
 ) -> Timeseries:
     """
     Compute interpolated timeseries
@@ -364,7 +382,9 @@ def interpolate_timeseries(
 
 
 # %% Wrapper
-def compute_splines(target: Timeseries, harmonisee: Timeseries, **kwargs) -> None:
+def compute_splines(
+    target: Timeseries, harmonisee: Timeseries, **kwargs: Any
+) -> Splines:
     """
     Convert input arrays into timeseries objects and compute splines
 
@@ -393,8 +413,8 @@ def compute_splines(target: Timeseries, harmonisee: Timeseries, **kwargs) -> Non
 
 
 def interpolate_harmoniser(  # noqa: PLR0913
-    interpolation_target: None,
-    harmonised_spline: None,
+    interpolation_target: Callable[[Any], Any],
+    harmonised_spline: Callable[[Any], Any],
     harmonisee_timeseries: Timeseries,
     convergence_time: Optional[Union[int, float]],
     harmonisation_time: Union[int, float],
@@ -459,11 +479,11 @@ def interpolate_harmoniser(  # noqa: PLR0913
 
 
 def harmonise_splines(
-    splines: None,
+    splines: Splines,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
     **kwargs: Any,
-) -> None:
+) -> Callable[[Any], Any]:
     """
     Harmonises two splines by matching a harmonisee to a target spline
 
@@ -514,11 +534,11 @@ def harmonise_splines(
 
 
 def biased_corrected_harmonisee(
-    splines: None,
+    splines: Splines,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
     **kwargs: Any,
-) -> None:
+) -> Any:
     """
     Compute the biased corrected spline
 
