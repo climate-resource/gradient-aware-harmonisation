@@ -12,3 +12,6 @@ It is currently empty, but we will aim to:
 - Show concrete examples without abstractions
 - Provide the minimum necessary explanation
 - Avoid any distraction
+
+## Getting Started
+See [Getting Started](./tutorial)

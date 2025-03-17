@@ -1,6 +1,6 @@
 [project]
 name = "gradient-aware-harmonisation"
-version = "0.2.2a1"
+version = "0.2.4a1"
 description = "gradient aware harmonisation of timeseries"
 authors = [
     { name = "Florence Bockting", email = "florence.bockting@climate-resource.com" },
@@ -10,7 +10,7 @@ requires-python = ">=3.9"
 dependencies = [
     "attrs>=24.3.0",
     "numpy>=1.25.0",
-    "pandas>=2.2.0",
+    "pandas>=2.2.3",
 ]
 readme = "README.md"
 classifiers = [
@@ -18,7 +18,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     ## If you apply an OSI-approved licence, you should uncomment the below
-    # "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
@@ -65,6 +65,8 @@ dev = [
     # ----------------
     "liccheck==0.9.2",
     "mypy==1.14.0",
+    # Required for type checking
+    "scipy-stubs>=1.14.1; python_full_version >= '3.10'",
     # Required for liccheck, see https://github.com/dhatim/python-license-check/pull/113
     "pip==24.3.1",
     "pre-commit==4.0.1",
