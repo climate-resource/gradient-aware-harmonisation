@@ -8,14 +8,8 @@ See https://oprypin.github.io/mkdocs-literate-nav/
 - [How-to guides](how-to-guides/index.md)
     - [Do a basic calculation](how-to-guides/basic-calculation.md)
 - [Tutorials](tutorials/index.md)
-<!---
-    - [Initial tutorial](tutorials/initial-tutorial.py)
--->
+    - [Getting Started](tutorials/tutorial.py)
 - [Further background](further-background/index.md)
-<!--- 
-    - [Sensitivity](further-background/sensitivity-analysis.py)
-    - [Development ideas](further-background/development.py)
--->
     - [Dependency pinning and testing strategy](further-background/dependency-pinning-and-testing.md)
 - [Development](development.md)
 - [API reference](api/gradient_aware_harmonisation/)

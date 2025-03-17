@@ -1,7 +1,11 @@
-import matplotlib.pyplot as plt
+"""
+Helper functions
+"""
 
+from typing import Optional, Union
+
+from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
 from gradient_aware_harmonisation.utils import Timeseries
-from typing import Union, Optional
 
 
 def plotting(
@@ -12,41 +16,53 @@ def plotting(
     convergence_time: Optional[Union[int, float]],
 ) -> None:
     """
-    plots the target, original and interpolated timeseries as computed with :func:`gradient_aware_harmonisation.harmonise.harmoniser`
+    Plot the target, original and interpolated timeseries
+
+    We expect these to have been computed with
+    [`harmoniser`][gradient_aware_harmonisation.harmonise.harmoniser].
 
     Parameters
     ----------
-    harmonisee_timeseries : Timeseries
-        timeseries that should be matched with the target timeseries at the harmonisation time point
-    target_timeseries : Timeseries
-        timeseries that is used for matching the harmonisee at the harmonisation time point
-    interpolated_timeseries : Timeseries
-        compute harmonised timeseries as returned by :func:`gradient_aware_harmonisation.harmonise.harmoniser`
-    harmonisation_time: Union[int, float]
-        time point at which the harmonisee should be matched with the target timeseries
-    convergence_time: Optional[Union[int, float]]
-        time point at which the harmonised timeseries should match again the original predictions of the harmonisee
+    harmonisee_timeseries
+        Harmonisee timeseries (i.e. the timeseries we want to harmonise)
 
-    Returns
-    -------
-    None
+    target_timeseries
+        Target timeseries (i.e. what we harmonise to)
+
+    interpolated_timeseries
+        Harmonised timeseries as returned by
+        [`harmoniser`][gradient_aware_harmonisation.harmonise.harmoniser]
+
+    harmonisation_time
+        Time point at which harmonisee should be matched to the target
+
+    convergence_time
+        Time point at which the harmonised data
+        should converge towards the prediced data.
     """
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "plotting", requirement="matplotlib"
+        ) from exc
+
     plt.figure(figsize=(6, 3))
     plt.plot(
         harmonisee_timeseries.time_axis,
-        harmonisee_timeseries.value,
+        harmonisee_timeseries.values,
         label="harmonisee",
         linestyle="--",
         color="black",
     )
     plt.plot(
         interpolated_timeseries.time_axis,
-        interpolated_timeseries.value,
+        interpolated_timeseries.values,
         label="harmonised",
     )
     plt.plot(
         target_timeseries.time_axis,
-        target_timeseries.value,
+        target_timeseries.values,
         label="target",
         color="red",
     )
@@ -54,4 +70,6 @@ def plotting(
     if convergence_time is not None:
         plt.axvline(convergence_time, color="black", linestyle="dotted")
     plt.legend(handlelength=0.3, fontsize="small", frameon=False)
+    plt.xlabel("time axis")
+    plt.ylabel("value")
     plt.show()

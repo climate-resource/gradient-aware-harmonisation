@@ -1,47 +1,77 @@
-from typing import Optional, Union
+"""
+Key harmonisation function
+"""
+
+from __future__ import annotations
+
+from typing import Any, Optional, Union
+
 from gradient_aware_harmonisation.utils import (
     Timeseries,
+    biased_corrected_harmonisee,
     compute_splines,
     harmonise_splines,
-    biased_corrected_harmonisee,
     interpolate_harmoniser,
 )
 
 
-def harmoniser(
+def harmoniser(  # noqa: PLR0913
     target_timeseries: Timeseries,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
     convergence_time: Optional[Union[int, float]],
     interpolation_target: str = "original",
     decay_method: str = "cosine",
-    **kwargs
-):
+    **kwargs: Any,
+) -> Timeseries:
     """
-    computes the harmonisation of two timeseries such that the harmonisee matches with the target at some
+    Harmonise two timeseries
+
+    When we say harmonise, we mean make it
+    such that the harmonisee matches with the target at some
     specified time point (called harmonisation time)
 
     Parameters
     ----------
-    target_timeseries : Timeseries
-        timeseries of target data (to which the harmonisee should be matched)
-    harmonisee_timeseries : Timeseries
-        timeseries of matching data (that should be matched to the target data at harmonisation time)
-    harmonisation_time : Union[int, float]
-        time point at which harmonisee should be matched to the target
-    convergence_time : Optional[Union[int, float]]
-        time point at which the harmonised data should converge towards the prediced data
-    interpolation_target : str, ["original", "bias_corrected"]
-        to which target the interpolated spline should converge: the original predicted data (harmonisee) or the
-        bias-corrected harmonisee (match at harmonisation time wrt zero-order derivative)
-    decay_method : str, ["cosine"]
-        decay function used to decay weights in the weighted sum of the interpolation spline
+    target_timeseries
+        Target timeseries (i.e. what we harmonise to)
+
+    harmonisee_timeseries
+        Harmonisee timeseries (i.e. the timeseries we want to harmonise)
+
+    harmonisation_time
+        Time point at which harmonisee should be matched to the target
+
+    convergence_time
+        Time point at which the harmonised data
+        should converge towards the prediced data.
+
+    interpolation_target
+        Target to which the harmonised timeseries should converge.
+
+        If original, we converge back to harmonisee.
+        If bias-corrected, we converge back to harmonissee
+        having applied a basic constant offset bias correction
+        (see the docs for further info TODO put a cross link to a notebook).
+
+    decay_method
+        Decay function used to decay weights
+        when interpolating between the target and our harmonisation target.
+        If 'polynomial' is used an additional argument 'pow' to specify the power
+        is required (should be => 1.)
+
     **kwargs
-        keyword arguments passed to make_interp_spline
+        keyword arguments passed to `make_interp_spline` or 'polynomial_decay'
+
+    Returns
+    -------
+    harmonised_timeseries :
+        timeseries of harmonised data set
     """
     if interpolation_target not in ["original", "bias_corrected"]:
-        raise ValueError(
-            f"interpolation_target must be 'original' or 'bias_corrected'. Got {interpolation_target}"
+        raise ValueError(  # noqa: TRY003
+            "interpolation_target must be 'original' or 'bias_corrected'. "
+            f"Got {interpolation_target=}"
         )
 
     # compute splines
@@ -56,7 +86,7 @@ def harmoniser(
 
     # get target of interpolation
     if interpolation_target == "original":
-        interpol_target = splines.harmonisee[0]
+        interpol_target = splines.harmonisee
     if interpolation_target == "bias_corrected":
         interpol_target = biased_corrected_harmonisee(
             splines, harmonisee_timeseries, harmonisation_time, **kwargs
@@ -70,6 +100,7 @@ def harmoniser(
         convergence_time,
         harmonisation_time,
         decay_method,
+        **kwargs,
     )
 
     return interpolated_timeseries
