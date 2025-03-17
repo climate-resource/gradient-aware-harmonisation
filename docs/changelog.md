@@ -21,6 +21,17 @@ from the examples given in that link.
 
 <!-- towncrier release notes start -->
 
+## Python package for zero- and first-order continuous timeseries v0.3.0 (2025-03-17)
+
+### ⚠️ Breaking Changes
+
+- Refactored the API as part of testing. If you're using this, be aware that we are going to do further refactoring soon i.e. the API is currently very unstable. ([#4](https://github.com/climate-resource/gradient-aware-harmonisation/pull/4))
+
+### 🔧 Trivial/Internal Changes
+
+- [#4](https://github.com/climate-resource/gradient-aware-harmonisation/pull/4)
+
+
 ## Python package for zero- and first-order continuous timeseries v0.2.3 (2025-03-16)
 
 No significant changes.
