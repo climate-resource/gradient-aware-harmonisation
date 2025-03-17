@@ -15,7 +15,7 @@ from gradient_aware_harmonisation.utils import (
 )
 
 
-def harmonisera(  # noqa: PLR0913
+def harmoniser(  # noqa: PLR0913
     target_timeseries: Timeseries,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
