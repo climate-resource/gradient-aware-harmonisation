@@ -159,15 +159,19 @@ def timeseries_to_spline(
                 " \n But must be greater than spline degree.",
             )
     else:
-        default_k = inspect.getfullargspec(
+        default_args = inspect.getfullargspec(
             scipy.interpolate.make_interp_spline
-        ).defaults[0]
-        if len(timeseries.time_axis) <= default_k:
-            raise ValueError(
-                f"Default spline degree k={default_k} is smaller or equal to length "
-                + f"of provided time_axis (={len(timeseries.time_axis)}) "
-                + "in timeseries object.\n But must be greater than spline degree.",
-            )
+        ).defaults
+
+        if default_args is not None:
+            default_k = default_args.index(0)
+            if len(timeseries.time_axis) <= default_k:
+                raise ValueError(
+                    f"Default spline degree k={default_k} is smaller or equal "
+                    + "to length of provided time_axis "
+                    + f"(={len(timeseries.time_axis)}) in timeseries object."
+                    + "\n But must be greater than spline degree.",
+                )
 
     spline = scipy.interpolate.make_interp_spline(
         timeseries.time_axis, timeseries.values, **kwargs_spline
