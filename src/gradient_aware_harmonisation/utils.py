@@ -5,7 +5,15 @@ Utility functions
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Optional, Protocol, TypeAlias, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Optional,
+    Protocol,
+    TypeAlias,
+    Union,
+    overload,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -13,8 +21,11 @@ from attrs import define, field
 
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
 
+if TYPE_CHECKING:
+    import scipy.interpolate
+
 # If you want, break these out into `gradient_aware_harmonisation.typing.py`
-NP_FLOAT_OR_INT: TypeAlias = Union[np.floating, np.integer]
+NP_FLOAT_OR_INT: TypeAlias = Union[np.floating[Any], np.integer[Any]]
 """
 Type alias for a numpy float or int (not complex)
 """
@@ -31,7 +42,18 @@ class Spline(Protocol):
     Single spline
     """
 
-    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT:
+    @overload
+    def __call__(self, x: int | float) -> int | float: ...
+
+    @overload
+    def __call__(self, x: NP_FLOAT_OR_INT) -> NP_FLOAT_OR_INT: ...
+
+    @overload
+    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
+
+    def __call__(
+        self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
+    ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
         """Get the value of the spline at a particular x-value"""
 
     def derivative(self) -> Spline:
@@ -51,8 +73,10 @@ class Splines:
     Spline class combined (target and harmonisee)
     """
 
-    target: Spline
-    harmonisee: Spline
+    # target: Spline
+    # harmonisee: Spline
+    target: scipy.interpolate.BSpline
+    harmonisee: scipy.interpolate.BSpline
 
 
 @define
@@ -85,7 +109,9 @@ class Timeseries:
             raise ValueError(msg)
 
 
-def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> Spline:
+def timeseries_to_spline(
+    timeseries: Timeseries, **kwargs: Any
+) -> scipy.interpolate.BSpline:
     """
     Estimates splines from timeseries arrays.
 
@@ -125,8 +151,10 @@ def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> Spline:
 
 
 def harmonise_timeseries(
-    target: Spline,
-    harmonisee: Spline,
+    # target: Spline,
+    # harmonisee: Spline,
+    target: scipy.interpolate.BSpline,
+    harmonisee: scipy.interpolate.BSpline,
     timeseries_harmonisee: Timeseries,
     harmonisation_time: Union[int, float],
 ) -> Timeseries:
@@ -335,8 +363,10 @@ def decay_weights(
 
 
 def interpolate_timeseries(
-    harmonisee: Spline,
-    harmonised: Spline,
+    # harmonisee: Spline,
+    # harmonised: Spline,
+    harmonisee: scipy.interpolate.BSpline,
+    harmonised: scipy.interpolate.BSpline,
     harmonisation_time: Union[int, float],
     timeseries_harmonisee: Timeseries,
     decay_weights: npt.NDArray[Any],
@@ -433,8 +463,8 @@ def compute_splines(
 
 
 def interpolate_harmoniser(  # noqa: PLR0913
-    interpolation_target: Callable[[Any], Any],
-    harmonised_spline: Callable[[Any], Any],
+    interpolation_target: scipy.interpolate.BSpline,
+    harmonised_spline: scipy.interpolate.BSpline,
     harmonisee_timeseries: Timeseries,
     convergence_time: Optional[Union[int, float]],
     harmonisation_time: Union[int, float],
@@ -503,7 +533,7 @@ def harmonise_splines(
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
     **kwargs: Any,
-) -> Callable[[Any], Any]:
+) -> scipy.interpolate.BSpline:
     """
     Harmonises two splines by matching a harmonisee to a target spline
 
