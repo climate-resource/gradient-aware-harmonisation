@@ -2,6 +2,8 @@
 Key harmonisation function
 """
 
+from __future__ import annotations
+
 from typing import Any, Optional, Union
 
 from gradient_aware_harmonisation.utils import (
@@ -13,7 +15,7 @@ from gradient_aware_harmonisation.utils import (
 )
 
 
-def harmoniser(  # noqa: PLR0913
+def harmonisera(  # noqa: PLR0913
     target_timeseries: Timeseries,
     harmonisee_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
@@ -63,7 +65,7 @@ def harmoniser(  # noqa: PLR0913
 
     Returns
     -------
-    harmonised timeseries :
+    harmonised_timeseries :
         timeseries of harmonised data set
     """
     if interpolation_target not in ["original", "bias_corrected"]:
