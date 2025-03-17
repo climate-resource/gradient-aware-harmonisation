@@ -10,7 +10,6 @@ from typing import (
     Any,
     Optional,
     Protocol,
-    TypeAlias,
     Union,
     overload,
 )
@@ -23,6 +22,7 @@ from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyErr
 
 if TYPE_CHECKING:
     import scipy.interpolate
+    from typing_extensions import TypeAlias
 
 # If you want, break these out into `gradient_aware_harmonisation.typing.py`
 NP_FLOAT_OR_INT: TypeAlias = Union[np.floating[Any], np.integer[Any]]
