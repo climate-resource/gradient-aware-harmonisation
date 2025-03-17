@@ -67,6 +67,11 @@ def harmoniser(  # noqa: PLR0913
     -------
     harmonised_timeseries :
         timeseries of harmonised data set
+
+    Raises
+    ------
+    ValueError
+        interpolation_target must be either 'original' or 'bias_corrected'
     """
     if interpolation_target not in ["original", "bias_corrected"]:
         raise ValueError(  # noqa: TRY003
