@@ -52,44 +52,44 @@ def t2():
     return res
 
 
-# %% setup scenarios
-
-scenario1 = [
-    # target == harmonisee; convergence time: No; harmonisation time at boundary: No
-    (1.0, None, f_equal, f_equal),
-    # target == harmonisee; convergence time: yes; harmonisation time at boundary: No
-    (1.0, 3.0, f_equal, f_equal),
-    # target == harmonisee; convergence time: No; harmonisation time at boundary: yes
-    (3.0, None, f_equal, f_equal),
-    # target == harmonisee; convergence time: yes; harmonisation time at boundary: yes
-    (3.0, 3.0, f_equal, f_equal),
+target_equals_harmonisee = [
+    pytest.param(
+        harmonisation_time,
+        convergence,
+        f_equal,
+        f_equal,
+        id=f"target-equals-harmonisee-{id_conv}-{id_ht}",
+    )
+    for id_conv, convergence in (("convergence", 3.0), ("no-convergence", None))
+    for id_ht, harmonisation_time in (("not-at-boundary", 1.0), ("at-boundary", 3.0))
 ]
 
-scenario2 = [
-    # target != harmonisee; convergence time: No; harmonisation time at boundary: No
-    (1.0, None, f1, f2),
-    # target != harmonisee; convergence time: yes; harmonisation time at boundary: No
-    (1.0, 3.0, f1, f2),
-    # target != harmonisee; convergence time: No; harmonisation time at boundary: yes
-    (3.0, None, f1, f2),
-    # target != harmonisee; convergence time: yes; harmonisation time at boundary: yes
-    (3.0, 3.0, f1, f2),
+target_differs_from_harmonisee = [
+    pytest.param(
+        harmonisation_time,
+        convergence,
+        f1,
+        f2,
+        id=f"target-differs-from-harmonisee-{id_conv}-{id_ht}",
+    )
+    for id_conv, convergence in (("convergence", 3.0), ("no-convergence", None))
+    for id_ht, harmonisation_time in (("not-at-boundary", 1.0), ("at-boundary", 3.0))
 ]
 
-scenario3 = [
-    # target != harmonisee; convergence time: No; harmonisation time at boundary: Yes
-    (2003, None, t1, t2),
-    # target != harmonisee; convergence time: yes; harmonisation time at boundary: Yes
-    (2003, 2005, t1, t2),
+realistic_dataset = [
+    pytest.param(2003, convergence, t1, t2, id=f"integer-harmonisation-year-{id}")
+    for id, convergence in (("convergence", 2005), ("no-convergence", None))
 ]
-
-# %% setup tests
-test_data = scenario1 + scenario2 + scenario3
 
 
 @pytest.mark.parametrize("test_criterion", ["zero-order", "first-order"])
 @pytest.mark.parametrize(
-    "harmonisation_time, convergence_time, target_func, harmonisee_func", test_data
+    "harmonisation_time, convergence_time, target_func, harmonisee_func",
+    [
+        *target_equals_harmonisee,
+        *target_differs_from_harmonisee,
+        *realistic_dataset,
+    ],
 )
 def test_harmonise_splines_equal_at_harmonisation_time(
     harmonisation_time,
