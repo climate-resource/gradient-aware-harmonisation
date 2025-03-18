@@ -25,7 +25,6 @@ Type alias for an array of numpy float or int (not complex)
 """
 
 
-@define
 class Spline(Protocol):
     """
     Single spline
@@ -60,12 +59,21 @@ class Spline(Protocol):
 
 
 @define
-class SplineScipyBSpline:
+class SplineScipy:
     """
-    An adapter which wraps an instance of [scipy.interpolate.BSpline][]
+    An adapter which wraps various classes from [scipy.interpolate][]
     """
 
-    scipy_spline: scipy.interpolate.BSpline
+    scipy_spline: scipy.interpolate.BSpline | scipy.interpolate.PPoly
+
+    @overload
+    def __call__(self, x: int | float) -> int | float: ...
+
+    @overload
+    def __call__(self, x: NP_FLOAT_OR_INT) -> NP_FLOAT_OR_INT: ...
+
+    @overload
+    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
 
     def __call__(
         self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
@@ -85,7 +93,7 @@ class SplineScipyBSpline:
         """
         return self.scipy_spline(x)
 
-    def derivative(self) -> SplineScipyBSpline:
+    def derivative(self) -> SplineScipy:
         """
         Calculate the derivative of self
 
@@ -94,9 +102,9 @@ class SplineScipyBSpline:
         :
             Derivative of self
         """
-        return SplineScipyBSpline(self.scipy_spline.derivative())
+        return SplineScipy(self.scipy_spline.derivative())
 
-    def antiderivative(self) -> SplineScipyBSpline:
+    def antiderivative(self) -> SplineScipy:
         """
         Calculate the anti-derivative/integral of self
 
@@ -105,7 +113,7 @@ class SplineScipyBSpline:
         :
             Anti-derivative of self
         """
-        return SplineScipyBSpline(self.scipy_spline.antiderivative())
+        return SplineScipy(self.scipy_spline.antiderivative())
 
 
 @define
@@ -119,6 +127,15 @@ class SumOfSplines:
 
     spline_two: Spline
     """Second spline"""
+
+    @overload
+    def __call__(self, x: int | float) -> int | float: ...
+
+    @overload
+    def __call__(self, x: NP_FLOAT_OR_INT) -> NP_FLOAT_OR_INT: ...
+
+    @overload
+    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
 
     def __call__(
         self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
@@ -185,10 +202,12 @@ def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
 
     return SumOfSplines(
         spline_one=in_spline,
-        spline_two=scipy.interpolate.PPoly(
-            c=[[constant]],
-            # # TODO: switch to something like
-            # x = in_spline.domain,
-            x=[-1e8, 1e8],
+        spline_two=SplineScipy(
+            scipy.interpolate.PPoly(
+                c=[[constant]],
+                # # TODO: switch to something like
+                # x = in_spline.domain,
+                x=[-1e8, 1e8],
+            )
         ),
     )

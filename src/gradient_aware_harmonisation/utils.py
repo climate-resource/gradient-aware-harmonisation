@@ -9,9 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Optional,
-    Protocol,
     Union,
-    overload,
 )
 
 import numpy as np
@@ -19,53 +17,10 @@ import numpy.typing as npt
 from attrs import define, field
 
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
-from gradient_aware_harmonisation.spline import add_constant_to_spline
+from gradient_aware_harmonisation.spline import Spline, add_constant_to_spline
 
 if TYPE_CHECKING:
     import scipy.interpolate
-    from typing_extensions import TypeAlias
-
-# If you want, break these out into `gradient_aware_harmonisation.typing.py`
-NP_FLOAT_OR_INT: TypeAlias = Union[np.floating[Any], np.integer[Any]]
-"""
-Type alias for a numpy float or int (not complex)
-"""
-
-NP_ARRAY_OF_FLOAT_OR_INT: TypeAlias = npt.NDArray[NP_FLOAT_OR_INT]
-"""
-Type alias for an array of numpy float or int (not complex)
-"""
-
-
-@define
-class Spline(Protocol):
-    """
-    Single spline
-    """
-
-    @overload
-    def __call__(self, x: int | float) -> int | float: ...
-
-    @overload
-    def __call__(self, x: NP_FLOAT_OR_INT) -> NP_FLOAT_OR_INT: ...
-
-    @overload
-    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
-
-    def __call__(
-        self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
-    ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
-        """Get the value of the spline at a particular x-value"""
-
-    def derivative(self) -> Spline:
-        """
-        Calculate the derivative of self
-        """
-
-    def antiderivative(self) -> Spline:
-        """
-        Calculate the anti-derivative/integral of self
-        """
 
 
 @define
