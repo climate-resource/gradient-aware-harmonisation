@@ -127,6 +127,13 @@ def timeseries_to_spline(
     -------
     spline : Spline
         compute spline from timeseries data
+
+    Raises
+    ------
+    ValueError
+        Spline degree (`k`) is smaller or equal to length of time_axis
+        in timeseries obj. Must be at least equal to spline degree.
+        (Default spline degree is `k = 3`)
     """
     try:
         import scipy.interpolate
@@ -142,6 +149,29 @@ def timeseries_to_spline(
     kwargs_spline: dict[str, Any] = {
         f"{key}": kwargs[key] for key in kwargs if key in args_make_interp_spline
     }
+
+    if "k" in kwargs_spline:
+        if len(timeseries.time_axis) <= kwargs_spline["k"]:
+            raise ValueError(
+                f"Spline degree {kwargs['k']} is smaller or equal to length "
+                + f"of provided time_axis (={len(timeseries.time_axis)}) "
+                + "in timeseries object.'"
+                " \n But must be greater than spline degree.",
+            )
+    else:
+        default_args = inspect.getfullargspec(
+            scipy.interpolate.make_interp_spline
+        ).defaults
+
+        if default_args is not None:
+            default_k = default_args.index(0)
+            if len(timeseries.time_axis) <= default_k:
+                raise ValueError(
+                    f"Default spline degree k={default_k} is smaller or equal "
+                    + "to length of provided time_axis "
+                    + f"(={len(timeseries.time_axis)}) in timeseries object."
+                    + "\n But must be greater than spline degree.",
+                )
 
     spline = scipy.interpolate.make_interp_spline(
         timeseries.time_axis, timeseries.values, **kwargs_spline

@@ -162,7 +162,7 @@ sensitivity_weight_decay(decay_method="polynomial", pow=1.0)
 sensitivity_weight_decay(decay_method="polynomial", pow=2.0)
 
 # %% [markdown]
-# ##### Polynomial decay, power = 2.
+# ##### Polynomial decay, power = 3.
 
 # %%
 sensitivity_weight_decay(decay_method="polynomial", pow=3.0)
@@ -173,12 +173,13 @@ sensitivity_weight_decay(decay_method="polynomial", pow=3.0)
 
 # %%
 # select harmonization time point
-harmonisation_time = 2003
+harmonisation_time = 2004
 convergence_time = 2006
 
 # get timeseries
 target_timeseries = Timeseries(
-    time_axis=np.array([2001, 2002, 2003]), values=np.array([371.77, 373.72, 376.33])
+    time_axis=np.array([2001, 2002, 2003, 2004]),
+    values=np.array([371.77, 373.72, 376.33, 378.83]),
 )
 harmonisee_timeseries = Timeseries(
     time_axis=np.array([2003, 2004, 2005, 2006, 2007]),
@@ -195,7 +196,6 @@ harmonised_timeseries = harmoniser(
     harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
     convergence_time=None,
-    bc_type="natural",
 )
 
 # harmonise timeseries at t0 and assure convergence at t1 (converge_t)
@@ -204,7 +204,6 @@ harmonised_timeseries2 = harmoniser(
     harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
     convergence_time=convergence_time,
-    bc_type="natural",
 )
 
 # harmonise timeseries at t0 and assure convergence at t1 (converge_t)
@@ -213,7 +212,6 @@ harmonised_timeseries3 = harmoniser(
     harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
     convergence_time=convergence_time,
-    bc_type="natural",
     interpolation_target="bias_corrected",
 )
 
