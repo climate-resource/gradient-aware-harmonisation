@@ -5,7 +5,7 @@ Integration tests of the `harmonise` module
 import numpy as np
 import pytest
 
-from gradient_aware_harmonisation.harmonise import harmoniser
+from gradient_aware_harmonisation import harmonise
 from gradient_aware_harmonisation.utils import Timeseries
 
 
@@ -33,7 +33,7 @@ def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_ti
         harmonisee.values[harmonisee.time_axis == harmonisation_time],
     )
 
-    res = harmoniser(
+    res = harmonise(
         target_timeseries=target,
         harmonisee_timeseries=harmonisee,
         harmonisation_time=harmonisation_time,
