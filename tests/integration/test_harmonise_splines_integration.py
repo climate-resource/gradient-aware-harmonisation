@@ -91,13 +91,16 @@ test_data = scenario1 + scenario2 + scenario3
 @pytest.mark.parametrize(
     "harmonisation_time, convergence_time, target_func, harmonisee_func", test_data
 )
-def test_harmonise_splines_equal_d0(
+def test_harmonise_splines_equal_at_harmonisation_time(
     harmonisation_time,
     convergence_time,
     target_func,
     harmonisee_func,
     test_criterion,
 ):
+    """
+    We check both the zeroth-order and first-order continuity
+    """
     scipy = pytest.importorskip("scipy")
 
     target = target_func()
