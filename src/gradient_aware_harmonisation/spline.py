@@ -164,7 +164,7 @@ class SumOfSplines:
         :
             Derivative of self
         """
-        return SumOfSplines(self.spline_one.derivative(), self.spline_two.derivative())
+        return SumOfSplines(self.spline_one.derivative(), self.spline_two)
 
     def antiderivative(self) -> SumOfSplines:
         """
