@@ -16,7 +16,7 @@ In this module, we need to test a few things:
 import numpy as np
 import pytest
 
-from gradient_aware_harmonisation.utils import Splines, Timeseries, harmonise_splines
+from gradient_aware_harmonisation.utils import Timeseries, harmonise_splines
 
 scipy = pytest.importorskip("scipy")
 
@@ -58,20 +58,13 @@ def test_target_and_harmonisee_equal(
 ):
     time_axis = np.array([0.0, 1.0, 2.0, 3.0])
     timeseries_target = Timeseries(time_axis=time_axis, values=time_axis**2)
-    harmonisee = timeseries_target
-
-    splines = Splines(
-        target=scipy.interpolate.make_interp_spline(
-            timeseries_target.time_axis, timeseries_target.values
-        ),
-        harmonisee=scipy.interpolate.make_interp_spline(
-            harmonisee.time_axis, harmonisee.values
-        ),
+    target = scipy.interpolate.make_interp_spline(
+        timeseries_target.time_axis, timeseries_target.values
     )
 
     harmon_spline = harmonise_splines(
-        splines,
-        harmonisee_timeseries=harmonisee,
+        target=target,
+        harmonisee=target,
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
     )
@@ -80,7 +73,7 @@ def test_target_and_harmonisee_equal(
         test_criterion=test_criterion,
         harmonisation_time=harmonisation_time,
         harmonised=harmon_spline,
-        target=splines.target,
+        target=target,
     )
 
 

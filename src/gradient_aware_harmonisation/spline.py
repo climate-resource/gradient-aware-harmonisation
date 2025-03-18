@@ -31,6 +31,9 @@ class Spline(Protocol):
     Single spline
     """
 
+    # domain: [float, float]
+    # """Domain over the spline can be used"""
+
     @overload
     def __call__(self, x: int | float) -> int | float: ...
 
@@ -106,16 +109,16 @@ class SplineScipyBSpline:
 
 
 @define
-class SplinePlusConstant:
+class SumOfSplines:
     """
-    A spline plus a constant
+    Sum of two splines
     """
 
-    spline: Spline
-    """Spline"""
+    spline_one: Spline
+    """First spline"""
 
-    constant: float | int
-    """Constant to add to the `spline`"""
+    spline_two: Spline
+    """Second spline"""
 
     def __call__(
         self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
@@ -133,9 +136,9 @@ class SplinePlusConstant:
         :
             Value of the spline at `x`
         """
-        return self.spline(x) + self.constant
+        return self.spline_one(x) + self.spline_two(x)
 
-    def derivative(self) -> SplineScipyBSpline:
+    def derivative(self) -> SumOfSplines:
         """
         Calculate the derivative of self
 
@@ -144,9 +147,9 @@ class SplinePlusConstant:
         :
             Derivative of self
         """
-        return self.derivative()
+        return SumOfSplines(self.spline_one.derivative(), self.spline_two.derivative())
 
-    def antiderivative(self) -> SplineScipyBSpline:
+    def antiderivative(self) -> SumOfSplines:
         """
         Calculate the anti-derivative/integral of self
 
@@ -155,7 +158,9 @@ class SplinePlusConstant:
         :
             Anti-derivative of self
         """
-        raise NotImplementedError
+        return SumOfSplines(
+            self.spline_one.antiderivative(), self.spline_two.antiderivative()
+        )
 
 
 def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
@@ -175,4 +180,15 @@ def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
     :
         Spline plus the given constant
     """
-    return SplinePlusConstant(spline=in_spline, constant=constant)
+    # TODO: wrap in try except
+    import scipy.interpolate
+
+    return SumOfSplines(
+        spline_one=in_spline,
+        spline_two=scipy.interpolate.PPoly(
+            c=[[constant]],
+            # # TODO: switch to something like
+            # x = in_spline.domain,
+            x=[-1e8, 1e8],
+        ),
+    )

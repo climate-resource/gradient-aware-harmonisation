@@ -19,6 +19,7 @@ import numpy.typing as npt
 from attrs import define, field
 
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
+from gradient_aware_harmonisation.spline import add_constant_to_spline
 
 if TYPE_CHECKING:
     import scipy.interpolate
@@ -65,18 +66,6 @@ class Spline(Protocol):
         """
         Calculate the anti-derivative/integral of self
         """
-
-
-@define
-class Splines:
-    """
-    Spline class combined (target and harmonisee)
-    """
-
-    # target: Spline
-    # harmonisee: Spline
-    target: scipy.interpolate.BSpline
-    harmonisee: scipy.interpolate.BSpline
 
 
 @define
@@ -180,45 +169,38 @@ def timeseries_to_spline(
     return spline
 
 
-def harmonise_timeseries(
-    # target: Spline,
-    # harmonisee: Spline,
-    target: scipy.interpolate.BSpline,
-    harmonisee: scipy.interpolate.BSpline,
-    timeseries_harmonisee: Timeseries,
+def harmonise_constant_offset(
+    target: Spline,
+    harmonisee: Spline,
     harmonisation_time: Union[int, float],
-) -> Timeseries:
+) -> Spline:
     """
-    Compute a timeseries based on the adjustment of the harmonisee to the target.
+    Harmonise timeseries using a constant offset
+
+    In other words, the timeseries are harmonised
+    by simply adding a constant to the harmonisee
+    such that its value matches the value of the target at the harmonisation time.
 
     Parameters
     ----------
     target
-        target spline from timeseries array
+        Target for harmonisation
 
     harmonisee
-        harmonisee spline from timeseries array (should be adjusted to target spline)
-
-    timeseries_harmonisee
-        harmonisee timeseries of format dict(time_axis = np.array, values = np.array)
+        Function/spline to harmonisation
 
     harmonisation_time
-        point in time_axis at which harmonisee should be matched to target
+        Time at which `target` and `harmonisee` should match exactly
 
     Returns
     -------
-    harmonised_timeseries :
-        harmonised timeseries
+    :
+        Harmonised spline
     """
     diff = target(harmonisation_time) - harmonisee(harmonisation_time)
-    harmonised_values = harmonisee(timeseries_harmonisee.time_axis) + diff
+    harmonised = add_constant_to_spline(in_spline=harmonisee, constant=diff)
 
-    harmonised_timeseries = Timeseries(
-        time_axis=timeseries_harmonisee.time_axis,
-        values=harmonised_values,
-    )
-
-    return harmonised_timeseries
+    return harmonised
 
 
 def cosine_decay(decay_steps: int, initial_weight: float = 1.0) -> npt.NDArray[Any]:
@@ -559,11 +541,11 @@ def interpolate_harmoniser(  # noqa: PLR0913
 
 
 def harmonise_splines(
-    splines: Splines,
-    harmonisee_timeseries: Timeseries,
+    target: Spline,
+    harmonisee: Spline,
     harmonisation_time: Union[int, float],
     **kwargs: Any,
-) -> scipy.interpolate.BSpline:
+) -> Spline:
     """
     Harmonises two splines by matching a harmonisee to a target spline
 
@@ -588,29 +570,29 @@ def harmonise_splines(
         and target have same zero-and first-order derivative at harmonisation time)
     """
     # compute derivatives
-    target_dspline = splines.target.derivative()
-    harmonisee_dspline = splines.harmonisee.derivative()
+    target_dspline = target.derivative()
+    harmonisee_dspline = harmonisee.derivative()
 
     # match first-order derivatives
-    harmonised_d1_timeseries = harmonise_timeseries(
-        target_dspline, harmonisee_dspline, harmonisee_timeseries, harmonisation_time
+    harmonised_first_derivative = harmonise_constant_offset(
+        target=target_dspline,
+        harmonisee=harmonisee_dspline,
+        harmonisation_time=harmonisation_time,
     )
-    # compute spline
-    harmonised_D1_spline = timeseries_to_spline(harmonised_d1_timeseries, **kwargs)
+
     # integrate to match zero-order derivative
-    harmonised_d1_spline = harmonised_D1_spline.antiderivative()
+    harmonised_spline_first_derivative_only = (
+        harmonised_first_derivative.antiderivative()
+    )
 
     # match zero-order derivatives
-    harmonised_d0d1_timeseries = harmonise_timeseries(
-        splines.target,
-        harmonised_d1_spline,
-        harmonisee_timeseries,
-        harmonisation_time,
+    harmonised_spline = harmonise_constant_offset(
+        target=target,
+        harmonisee=harmonised_spline_first_derivative_only,
+        harmonisation_time=harmonisation_time,
     )
-    # compute spline
-    harmonised_d0d1_spline = timeseries_to_spline(harmonised_d0d1_timeseries, **kwargs)
 
-    return harmonised_d0d1_spline
+    return harmonised_spline
 
 
 def biased_corrected_harmonisee(
