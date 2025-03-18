@@ -98,13 +98,7 @@ def test_harmonise_splines_equal_d0(
     harmonisee_func,
     test_criterion,
 ):
-    pytest.importorskip("scipy")
-    try:
-        import scipy
-    except ImportError:
-        raise ImportError(  # noqa: TRY003
-            "scipy cannot be imported."
-        )
+    scipy = pytest.importorskip("scipy")
 
     target = target_func()
     harmonisee = harmonisee_func()
