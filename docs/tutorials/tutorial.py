@@ -29,7 +29,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from gradient_aware_harmonisation.harmonise import harmoniser
+from gradient_aware_harmonisation import harmonise
 from gradient_aware_harmonisation.helpers import plotting
 from gradient_aware_harmonisation.utils import (
     Timeseries,
@@ -59,9 +59,9 @@ harmonisee_timeseries = Timeseries(time_axis=x2, values=y2)
 # #### Inspect `harmoniser` function
 
 # %%
-help(harmoniser)
+help(harmonise)
 
-harmonised_timeseries = harmoniser(
+harmonised_timeseries = harmonise(
     target_timeseries=target_timeseries,
     harmonisee_timeseries=harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
@@ -87,7 +87,7 @@ plotting(
 # %%
 convergence_time = 8.0
 
-harmonised_timeseries = harmoniser(
+harmonised_timeseries = harmonise(
     target_timeseries=target_timeseries,
     harmonisee_timeseries=harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
@@ -125,7 +125,7 @@ plt.show()
 
 # %%
 def sensitivity_weight_decay(decay_method, **kwargs):  # noqa: D103
-    harmonised_timeseries = harmoniser(
+    harmonised_timeseries = harmonise(
         target_timeseries=target_timeseries,
         harmonisee_timeseries=harmonisee_timeseries,
         harmonisation_time=harmonisation_time,
@@ -191,7 +191,7 @@ harmonisee_timeseries = Timeseries(
 
 # %%
 # harmonise timeseries at t0
-harmonised_timeseries = harmoniser(
+harmonised_timeseries = harmonise(
     target_timeseries,
     harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
@@ -199,7 +199,7 @@ harmonised_timeseries = harmoniser(
 )
 
 # harmonise timeseries at t0 and assure convergence at t1 (converge_t)
-harmonised_timeseries2 = harmoniser(
+harmonised_timeseries2 = harmonise(
     target_timeseries,
     harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
@@ -207,7 +207,7 @@ harmonised_timeseries2 = harmoniser(
 )
 
 # harmonise timeseries at t0 and assure convergence at t1 (converge_t)
-harmonised_timeseries3 = harmoniser(
+harmonised_timeseries3 = harmonise(
     target_timeseries,
     harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
