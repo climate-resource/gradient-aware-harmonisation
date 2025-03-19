@@ -17,7 +17,11 @@ import numpy.typing as npt
 from attrs import define, field
 
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
-from gradient_aware_harmonisation.spline import Spline, add_constant_to_spline
+from gradient_aware_harmonisation.spline import (
+    Spline,
+    SplineScipy,
+    add_constant_to_spline,
+)
 
 if TYPE_CHECKING:
     pass
@@ -53,21 +57,21 @@ class Timeseries:
             raise ValueError(msg)
 
 
-def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> Spline:
+def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> SplineScipy:
     """
     Estimates splines from timeseries arrays.
 
     Parameters
     ----------
-    timeseries : Timeseries
+    timeseries
         timeseries of format dict(time_axis = np.array, values = np.array)
 
-    **kwargs :
+    **kwargs
         additional arguments to ``scipy.interpolate.make_interp_spline``
 
     Returns
     -------
-    spline : Spline
+    spline :
         compute spline from timeseries data
 
     Raises
@@ -115,8 +119,10 @@ def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> Spline:
                     + "\n But must be greater than spline degree.",
                 )
 
-    spline = scipy.interpolate.make_interp_spline(
-        timeseries.time_axis, timeseries.values, **kwargs_spline
+    spline = SplineScipy(
+        scipy.interpolate.make_interp_spline(
+            timeseries.time_axis, timeseries.values, **kwargs_spline
+        )
     )
 
     return spline
