@@ -6,12 +6,13 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import scipy.interpolate
 
 from gradient_aware_harmonisation.spline import (
     SplineScipy,
     add_constant_to_spline,
 )
+
+scipy = pytest.importorskip("scipy")
 
 # TODO:
 # - tests of SplineScipyBSpline
