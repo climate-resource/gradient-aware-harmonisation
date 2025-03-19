@@ -17,10 +17,14 @@ import numpy.typing as npt
 from attrs import define, field
 
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
-from gradient_aware_harmonisation.spline import Spline, add_constant_to_spline
+from gradient_aware_harmonisation.spline import (
+    Spline,
+    SplineScipy,
+    add_constant_to_spline,
+)
 
 if TYPE_CHECKING:
-    import scipy.interpolate
+    pass
 
 
 @define
@@ -53,23 +57,21 @@ class Timeseries:
             raise ValueError(msg)
 
 
-def timeseries_to_spline(
-    timeseries: Timeseries, **kwargs: Any
-) -> scipy.interpolate.BSpline:
+def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> SplineScipy:
     """
     Estimates splines from timeseries arrays.
 
     Parameters
     ----------
-    timeseries : Timeseries
+    timeseries
         timeseries of format dict(time_axis = np.array, values = np.array)
 
-    **kwargs :
+    **kwargs
         additional arguments to ``scipy.interpolate.make_interp_spline``
 
     Returns
     -------
-    spline : Spline
+    spline :
         compute spline from timeseries data
 
     Raises
@@ -117,8 +119,10 @@ def timeseries_to_spline(
                     + "\n But must be greater than spline degree.",
                 )
 
-    spline = scipy.interpolate.make_interp_spline(
-        timeseries.time_axis, timeseries.values, **kwargs_spline
+    spline = SplineScipy(
+        scipy.interpolate.make_interp_spline(
+            timeseries.time_axis, timeseries.values, **kwargs_spline
+        )
     )
 
     return spline
@@ -330,10 +334,8 @@ def decay_weights(
 
 
 def interpolate_timeseries(
-    # harmonisee: Spline,
-    # harmonised: Spline,
-    harmonisee: scipy.interpolate.BSpline,
-    harmonised: scipy.interpolate.BSpline,
+    harmonisee: Spline,
+    harmonised: Spline,
     harmonisation_time: Union[int, float],
     timeseries_harmonisee: Timeseries,
     decay_weights: npt.NDArray[Any],
@@ -368,10 +370,6 @@ def interpolate_timeseries(
     timeseries_interpolated :
         timeseries that interpolate between harmonised spline and harmonisee
     """
-    # timeseries harmonised
-    # timeseries_harmonised = harmonised(timeseries_harmonisee.time_axis.values)
-    # reduce timeseries from harmonisation time point
-
     if not np.isin(
         np.float32(timeseries_harmonisee.time_axis), np.float32(harmonisation_time)
     ).any():
@@ -401,7 +399,7 @@ def interpolate_timeseries(
 # %% Wrapper
 def compute_splines(
     target: Timeseries, harmonisee: Timeseries, **kwargs: Any
-) -> Splines:
+) -> dict[str, Spline]:
     """
     Convert input arrays into timeseries objects and compute splines
 
@@ -425,13 +423,13 @@ def compute_splines(
     target_spline = timeseries_to_spline(target, **kwargs)
     harmonisee_spline = timeseries_to_spline(harmonisee, **kwargs)
 
-    splines = Splines(target=target_spline, harmonisee=harmonisee_spline)
+    splines = dict(target=target_spline, harmonisee=harmonisee_spline)
     return splines
 
 
 def interpolate_harmoniser(  # noqa: PLR0913
-    interpolation_target: scipy.interpolate.BSpline,
-    harmonised_spline: scipy.interpolate.BSpline,
+    interpolation_target: Spline,
+    harmonised_spline: Spline,
     harmonisee_timeseries: Timeseries,
     convergence_time: Optional[Union[int, float]],
     harmonisation_time: Union[int, float],
@@ -506,11 +504,11 @@ def harmonise_splines(
 
     Parameters
     ----------
-    splines
-        splines of target and harmonisee as computed by :func:`compute_splines`
+    target
+        target spline
 
-    harmonisee_timeseries
-        timeseries of matching data
+    harmonisee
+        harmonisee spline
 
     harmonisation_time
         time point at which harmonisee should be matched to the target
@@ -551,8 +549,7 @@ def harmonise_splines(
 
 
 def biased_corrected_harmonisee(
-    splines: Splines,
-    harmonisee_timeseries: Timeseries,
+    splines: dict[str, Spline],
     harmonisation_time: Union[int, float],
     **kwargs: Any,
 ) -> Any:
@@ -565,10 +562,7 @@ def biased_corrected_harmonisee(
     Parameters
     ----------
     splines
-        splines of target and harmonisee as computed by :func:`compute_splines`
-
-    harmonisee_timeseries
-        timeseries of matching data
+        splines of target and harmonisee
 
     harmonisation_time
         time point at which harmonisee should be matched to the target
@@ -581,14 +575,10 @@ def biased_corrected_harmonisee(
     biased_corrected_spline :
         biased corrected spline
     """
-    biased_corrected_timeseries = harmonise_timeseries(
-        splines.target,
-        splines.harmonisee,
-        harmonisee_timeseries,
-        harmonisation_time,
-    )
-    biased_corrected_spline = timeseries_to_spline(
-        biased_corrected_timeseries, **kwargs
+    bias_corrected_spline = harmonise_constant_offset(
+        target=splines["target"],
+        harmonisee=splines["harmonisee"],
+        harmonisation_time=harmonisation_time,
     )
 
-    return biased_corrected_spline
+    return bias_corrected_spline

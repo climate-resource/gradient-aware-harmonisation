@@ -15,7 +15,7 @@ from gradient_aware_harmonisation.utils import Timeseries
 def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_time):
     pytest.importorskip("scipy")
     # Note: you have to be very careful here to make sure
-    # that the target and harmnoisee are the same in both absolute value and gradient,
+    # that the target and harmonisee are the same in both absolute value and gradient,
     # even once converted to a spline.
     # (Hence the very simple set up below, it is tricky to ensure
     # this equality otherwise)

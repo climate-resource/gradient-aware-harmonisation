@@ -88,15 +88,18 @@ def harmonise(  # noqa: PLR0913
 
     # compute harmonised spline
     harmonised_spline = harmonise_splines(
-        splines, harmonisee_timeseries, harmonisation_time, **kwargs
+        target=splines["target"],
+        harmonisee=splines["harmonisee"],
+        harmonisation_time=harmonisation_time,
+        **kwargs,
     )
 
     # get target of interpolation
     if interpolation_target == "original":
-        interpol_target = splines.harmonisee
+        interpol_target = splines["harmonisee"]
     if interpolation_target == "bias_corrected":
         interpol_target = biased_corrected_harmonisee(
-            splines, harmonisee_timeseries, harmonisation_time, **kwargs
+            splines=splines, harmonisation_time=harmonisation_time, **kwargs
         )
 
     # compute interpolation timeseries

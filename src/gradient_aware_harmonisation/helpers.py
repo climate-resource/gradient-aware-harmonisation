@@ -19,7 +19,7 @@ def plotting(
     Plot the target, original and interpolated timeseries
 
     We expect these to have been computed with
-    [`harmoniser`][gradient_aware_harmonisation.harmonise.harmoniser].
+    [`harmonise`][gradient_aware_harmonisation.harmonise].
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def plotting(
 
     interpolated_timeseries
         Harmonised timeseries as returned by
-        [`harmoniser`][gradient_aware_harmonisation.harmonise.harmoniser]
+        [`harmonise`][gradient_aware_harmonisation.harmonise]
 
     harmonisation_time
         Time point at which harmonisee should be matched to the target

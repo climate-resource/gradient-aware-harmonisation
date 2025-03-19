@@ -16,6 +16,7 @@ In this module, we need to test a few things:
 import numpy as np
 import pytest
 
+from gradient_aware_harmonisation.spline import SplineScipy
 from gradient_aware_harmonisation.utils import Timeseries, harmonise_splines
 
 scipy = pytest.importorskip("scipy")
@@ -58,8 +59,10 @@ def test_target_and_harmonisee_equal(
 ):
     time_axis = np.array([0.0, 1.0, 2.0, 3.0])
     timeseries_target = Timeseries(time_axis=time_axis, values=time_axis**2)
-    target = scipy.interpolate.make_interp_spline(
-        timeseries_target.time_axis, timeseries_target.values
+    target = SplineScipy(
+        scipy.interpolate.make_interp_spline(
+            timeseries_target.time_axis, timeseries_target.values
+        )
     )
 
     harmon_spline = harmonise_splines(
@@ -93,18 +96,22 @@ def test_target_and_harmonisee_differ(
         time_axis=time_axis_harmonisee, values=-1.3 * np.sin(time_axis_harmonisee) + 8
     )
 
-    splines = Splines(
-        target=scipy.interpolate.make_interp_spline(
-            timeseries_target.time_axis, timeseries_target.values
+    splines = dict(
+        target=SplineScipy(
+            scipy.interpolate.make_interp_spline(
+                timeseries_target.time_axis, timeseries_target.values
+            )
         ),
-        harmonisee=scipy.interpolate.make_interp_spline(
-            timeseries_harmonisee.time_axis, timeseries_harmonisee.values
+        harmonisee=SplineScipy(
+            scipy.interpolate.make_interp_spline(
+                timeseries_harmonisee.time_axis, timeseries_harmonisee.values
+            )
         ),
     )
 
     harmon_spline = harmonise_splines(
-        splines,
-        harmonisee_timeseries=timeseries_harmonisee,
+        target=splines["target"],
+        harmonisee=splines["harmonisee"],
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
     )
@@ -113,7 +120,7 @@ def test_target_and_harmonisee_differ(
         test_criterion=test_criterion,
         harmonisation_time=harmonisation_time,
         harmonised=harmon_spline,
-        target=splines.target,
+        target=splines["target"],
     )
 
 
@@ -134,18 +141,22 @@ def test_more_realistic(test_criterion, convergence_time, harmonisation_time):
         values=np.array([376.28, 378.83, 381.20, 382.55]),
     )
 
-    splines = Splines(
-        target=scipy.interpolate.make_interp_spline(
-            timeseries_target.time_axis, timeseries_target.values
+    splines = dict(
+        target=SplineScipy(
+            scipy.interpolate.make_interp_spline(
+                timeseries_target.time_axis, timeseries_target.values
+            )
         ),
-        harmonisee=scipy.interpolate.make_interp_spline(
-            timeseries_harmonisee.time_axis, timeseries_harmonisee.values
+        harmonisee=SplineScipy(
+            scipy.interpolate.make_interp_spline(
+                timeseries_harmonisee.time_axis, timeseries_harmonisee.values
+            )
         ),
     )
 
     harmon_spline = harmonise_splines(
-        splines,
-        harmonisee_timeseries=timeseries_harmonisee,
+        target=splines["target"],
+        harmonisee=splines["harmonisee"],
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
     )
@@ -154,7 +165,7 @@ def test_more_realistic(test_criterion, convergence_time, harmonisation_time):
         test_criterion=test_criterion,
         harmonisation_time=harmonisation_time,
         harmonised=harmon_spline,
-        target=splines.target,
+        target=splines["target"],
     )
 
 
