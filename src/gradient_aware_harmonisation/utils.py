@@ -53,9 +53,7 @@ class Timeseries:
             raise ValueError(msg)
 
 
-def timeseries_to_spline(
-    timeseries: Timeseries, **kwargs: Any
-) -> scipy.interpolate.BSpline:
+def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> Spline:
     """
     Estimates splines from timeseries arrays.
 
@@ -401,7 +399,7 @@ def interpolate_timeseries(
 # %% Wrapper
 def compute_splines(
     target: Timeseries, harmonisee: Timeseries, **kwargs: Any
-) -> Splines:
+) -> dict[str, Spline]:
     """
     Convert input arrays into timeseries objects and compute splines
 
@@ -425,13 +423,13 @@ def compute_splines(
     target_spline = timeseries_to_spline(target, **kwargs)
     harmonisee_spline = timeseries_to_spline(harmonisee, **kwargs)
 
-    splines = Splines(target=target_spline, harmonisee=harmonisee_spline)
+    splines = dict(target=target_spline, harmonisee=harmonisee_spline)
     return splines
 
 
 def interpolate_harmoniser(  # noqa: PLR0913
-    interpolation_target: scipy.interpolate.BSpline,
-    harmonised_spline: scipy.interpolate.BSpline,
+    interpolation_target: Spline,
+    harmonised_spline: Spline,
     harmonisee_timeseries: Timeseries,
     convergence_time: Optional[Union[int, float]],
     harmonisation_time: Union[int, float],
@@ -551,8 +549,7 @@ def harmonise_splines(
 
 
 def biased_corrected_harmonisee(
-    splines: Splines,
-    harmonisee_timeseries: Timeseries,
+    splines: dict[str, Spline],
     harmonisation_time: Union[int, float],
     **kwargs: Any,
 ) -> Any:
@@ -567,9 +564,6 @@ def biased_corrected_harmonisee(
     splines
         splines of target and harmonisee as computed by :func:`compute_splines`
 
-    harmonisee_timeseries
-        timeseries of matching data
-
     harmonisation_time
         time point at which harmonisee should be matched to the target
 
@@ -581,14 +575,19 @@ def biased_corrected_harmonisee(
     biased_corrected_spline :
         biased corrected spline
     """
-    biased_corrected_timeseries = harmonise_timeseries(
-        splines.target,
-        splines.harmonisee,
-        harmonisee_timeseries,
-        harmonisation_time,
+    bias_corrected_spline = harmonise_constant_offset(
+        target=splines["target"],
+        harmonisee=splines["harmonisee"],
+        harmonisation_time=harmonisation_time,
     )
-    biased_corrected_spline = timeseries_to_spline(
-        biased_corrected_timeseries, **kwargs
-    )
+    # biased_corrected_timeseries = harmonise_timeseries(
+    #    splines.target,
+    #    splines.harmonisee,
+    #    harmonisee_timeseries,
+    #    harmonisation_time,
+    # )
+    # biased_corrected_spline = timeseries_to_spline(
+    #    biased_corrected_timeseries, **kwargs
+    # )
 
-    return biased_corrected_spline
+    return bias_corrected_spline

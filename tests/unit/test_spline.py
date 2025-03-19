@@ -47,7 +47,7 @@ def test_add_constant_to_spline_derivative(const):
 
     x_fine = np.linspace(x_values.min(), x_values.max(), 101)
 
-    np.testing.assert_equal(start_derivative(x_fine) + const, res_derivative(x_fine))
+    np.testing.assert_equal(start_derivative(x_fine), res_derivative(x_fine))
 
 
 @pytest.mark.parametrize("const", (-1.3, 0.0, 2.5))
