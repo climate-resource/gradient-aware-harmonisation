@@ -6,6 +6,7 @@ import importlib.metadata
 from typing import Any, Optional, Union
 
 from gradient_aware_harmonisation import utils
+from gradient_aware_harmonisation.spline import Spline
 from gradient_aware_harmonisation.utils import (
     Timeseries,
     harmonise_constant_offset,
@@ -95,7 +96,7 @@ def harmonise(  # noqa: PLR0913
 
     # get target of interpolation
     if interpolation_target == "original":
-        interpol_target = harmonisee_spline
+        interpol_target: Spline = harmonisee_spline
     if interpolation_target == "bias_corrected":
         interpol_target = harmonise_constant_offset(
             target=target_spline,
