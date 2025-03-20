@@ -16,11 +16,13 @@ In this module, we need to test a few things:
 import numpy as np
 import pytest
 
-from gradient_aware_harmonisation.utils import Splines, Timeseries, harmonise_splines
+from gradient_aware_harmonisation.spline import SplineScipy
+from gradient_aware_harmonisation.utils import Timeseries, harmonise_splines
 
 scipy = pytest.importorskip("scipy")
 
-test_criteria = pytest.mark.parametrize("test_criterion", ("zero-order", "first-order"))
+# Can't start with 'test' as then pytest thinks it's a test
+tst_criteria = pytest.mark.parametrize("test_criterion", ("zero-order", "first-order"))
 
 
 def check_continuity(  # noqa: PLR0913
@@ -52,26 +54,21 @@ def check_continuity(  # noqa: PLR0913
 
 @pytest.mark.parametrize("harmonisation_time", (1.0, 3.0))
 @pytest.mark.parametrize("convergence_time", (None, 3.0))
-@test_criteria
+@tst_criteria
 def test_target_and_harmonisee_equal(
     test_criterion, convergence_time, harmonisation_time
 ):
     time_axis = np.array([0.0, 1.0, 2.0, 3.0])
     timeseries_target = Timeseries(time_axis=time_axis, values=time_axis**2)
-    harmonisee = timeseries_target
-
-    splines = Splines(
-        target=scipy.interpolate.make_interp_spline(
+    target = SplineScipy(
+        scipy.interpolate.make_interp_spline(
             timeseries_target.time_axis, timeseries_target.values
-        ),
-        harmonisee=scipy.interpolate.make_interp_spline(
-            harmonisee.time_axis, harmonisee.values
-        ),
+        )
     )
 
     harmon_spline = harmonise_splines(
-        splines,
-        harmonisee_timeseries=harmonisee,
+        target=target,
+        harmonisee=target,
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
     )
@@ -80,13 +77,13 @@ def test_target_and_harmonisee_equal(
         test_criterion=test_criterion,
         harmonisation_time=harmonisation_time,
         harmonised=harmon_spline,
-        target=splines.target,
+        target=target,
     )
 
 
 @pytest.mark.parametrize("harmonisation_time", (1.0, 3.0))
 @pytest.mark.parametrize("convergence_time", (None, 3.0))
-@test_criteria
+@tst_criteria
 def test_target_and_harmonisee_differ(
     test_criterion, convergence_time, harmonisation_time
 ):
@@ -100,18 +97,22 @@ def test_target_and_harmonisee_differ(
         time_axis=time_axis_harmonisee, values=-1.3 * np.sin(time_axis_harmonisee) + 8
     )
 
-    splines = Splines(
-        target=scipy.interpolate.make_interp_spline(
-            timeseries_target.time_axis, timeseries_target.values
+    splines = dict(
+        target=SplineScipy(
+            scipy.interpolate.make_interp_spline(
+                timeseries_target.time_axis, timeseries_target.values
+            )
         ),
-        harmonisee=scipy.interpolate.make_interp_spline(
-            timeseries_harmonisee.time_axis, timeseries_harmonisee.values
+        harmonisee=SplineScipy(
+            scipy.interpolate.make_interp_spline(
+                timeseries_harmonisee.time_axis, timeseries_harmonisee.values
+            )
         ),
     )
 
     harmon_spline = harmonise_splines(
-        splines,
-        harmonisee_timeseries=timeseries_harmonisee,
+        target=splines["target"],
+        harmonisee=splines["harmonisee"],
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
     )
@@ -120,13 +121,13 @@ def test_target_and_harmonisee_differ(
         test_criterion=test_criterion,
         harmonisation_time=harmonisation_time,
         harmonised=harmon_spline,
-        target=splines.target,
+        target=splines["target"],
     )
 
 
 @pytest.mark.parametrize("harmonisation_time", (2003.0,))
 @pytest.mark.parametrize("convergence_time", (None, 2005.0))
-@test_criteria
+@tst_criteria
 def test_more_realistic(test_criterion, convergence_time, harmonisation_time):
     """
     Both testing more realistic data but also a time axis that has integer values
@@ -141,18 +142,22 @@ def test_more_realistic(test_criterion, convergence_time, harmonisation_time):
         values=np.array([376.28, 378.83, 381.20, 382.55]),
     )
 
-    splines = Splines(
-        target=scipy.interpolate.make_interp_spline(
-            timeseries_target.time_axis, timeseries_target.values
+    splines = dict(
+        target=SplineScipy(
+            scipy.interpolate.make_interp_spline(
+                timeseries_target.time_axis, timeseries_target.values
+            )
         ),
-        harmonisee=scipy.interpolate.make_interp_spline(
-            timeseries_harmonisee.time_axis, timeseries_harmonisee.values
+        harmonisee=SplineScipy(
+            scipy.interpolate.make_interp_spline(
+                timeseries_harmonisee.time_axis, timeseries_harmonisee.values
+            )
         ),
     )
 
     harmon_spline = harmonise_splines(
-        splines,
-        harmonisee_timeseries=timeseries_harmonisee,
+        target=splines["target"],
+        harmonisee=splines["harmonisee"],
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
     )
@@ -161,7 +166,7 @@ def test_more_realistic(test_criterion, convergence_time, harmonisation_time):
         test_criterion=test_criterion,
         harmonisation_time=harmonisation_time,
         harmonised=harmon_spline,
-        target=splines.target,
+        target=splines["target"],
     )
 
 
