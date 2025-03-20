@@ -194,6 +194,177 @@ class SumOfSplines:
         )
 
 
+@define
+class ProductOfSplines:
+    """
+    Product of two splines
+    """
+
+    spline_one: Spline
+    """First spline"""
+
+    spline_two: Spline
+    """Second spline"""
+
+    # domain: ClassVar[list[float, float]] = [
+    #     np.finfo(np.float64).tiny,
+    #     np.finfo(np.float64).max,
+    # ]
+    # """Domain of spline"""
+
+    @overload
+    def __call__(self, x: int | float) -> int | float: ...
+
+    @overload
+    def __call__(self, x: NP_FLOAT_OR_INT) -> NP_FLOAT_OR_INT: ...
+
+    @overload
+    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
+
+    def __call__(
+        self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
+    ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
+        """
+        Evaluate the spline at a given x-value
+
+        Parameters
+        ----------
+        x
+            x-value
+
+        Returns
+        -------
+        :
+            Value of the spline at `x`
+        """
+        return self.spline_one(x) * self.spline_two(x)
+
+    def derivative(self) -> SumOfSplines:
+        """
+        Calculate the derivative of self
+
+        Returns
+        -------
+        :
+            Derivative of self
+        """
+        return SumOfSplines(
+            ProductOfSplines(self.spline_one, self.spline_two.derivative()),
+            ProductOfSplines(self.spline_one.derivative(), self.spline_two),
+        )
+
+    def antiderivative(self) -> SumOfSplines:
+        """
+        Calculate the anti-derivative/integral of self
+
+        Returns
+        -------
+        :
+            Anti-derivative of self
+        """
+        return SumOfSplines(
+            ProductOfSplines(self.spline_one, self.spline_two.antiderivative()),
+            ProductOfSplines(
+                self.spline_one.derivative(), self.spline_two.antiderivative()
+            ),
+        )
+
+
+@define
+class SplineCosineConvergence:
+    """
+    Spline with cosine-decay from one spline to another
+
+    Between `initial_time` and `final_time`,
+    we return values based on a cosine-decay between `initial` and `final`.
+    """
+
+    initial_time: Union[float, int]
+    """
+    At and before this time, we return values from `initial`
+    """
+
+    final_time: Union[float, int]
+    """
+    At and after this time, we return values from `final`
+    """
+
+    initial: Spline
+    """
+    The spline whose values we use at and before `initial_time`
+    """
+
+    final: Spline
+    """
+    The spline whose values we use at and after `final_time`
+    """
+
+    # domain: ClassVar[list[float, float]] = [
+    #     np.finfo(np.float64).tiny,
+    #     np.finfo(np.float64).max,
+    # ]
+    # """Domain of spline"""
+
+    @overload
+    def __call__(self, x: int | float) -> int | float: ...
+
+    @overload
+    def __call__(self, x: NP_FLOAT_OR_INT) -> NP_FLOAT_OR_INT: ...
+
+    @overload
+    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
+
+    def __call__(
+        self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
+    ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
+        """
+        Evaluate the spline at a given x-value
+
+        Parameters
+        ----------
+        x
+            x-value
+
+        Returns
+        -------
+        :
+            Value of the spline at `x`
+        """
+        if x <= self.initial_time:
+            return self.initial(x)
+
+        if x >= self.final_time:
+            return self.final(x)
+
+        angle = np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
+        gamma = 0.5 * (1 + np.cos(angle))
+        res = gamma * self.initial(x) + (1 - gamma) * self.final(x)
+
+        return res
+
+    def derivative(self) -> SumOfSplines:
+        """
+        Calculate the derivative of self
+
+        Returns
+        -------
+        :
+            Derivative of self
+        """
+        raise NotImplementedError
+
+    def antiderivative(self) -> SumOfSplines:
+        """
+        Calculate the anti-derivative/integral of self
+
+        Returns
+        -------
+        :
+            Anti-derivative of self
+        """
+        raise NotImplementedError
+
+
 def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
     """
     Add a constant value to a spline
