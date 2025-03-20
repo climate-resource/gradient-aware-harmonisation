@@ -396,37 +396,6 @@ def interpolate_timeseries(
     return timeseries_interpolated
 
 
-# %% Wrapper
-def compute_splines(
-    target: Timeseries, harmonisee: Timeseries, **kwargs: Any
-) -> dict[str, Spline]:
-    """
-    Convert input arrays into timeseries objects and compute splines
-
-    Parameters
-    ----------
-    target
-        Timeseries of target data
-
-    harmonisee
-        timeseries of matching data (have to be adjusted to match the target)
-
-    **kwargs
-        keyword arguments passed to make_interp_spline
-
-    Returns
-    -------
-    splines :
-        splines of target and harmonisee
-    """
-    # compute splines
-    target_spline = timeseries_to_spline(target, **kwargs)
-    harmonisee_spline = timeseries_to_spline(harmonisee, **kwargs)
-
-    splines = dict(target=target_spline, harmonisee=harmonisee_spline)
-    return splines
-
-
 def interpolate_harmoniser(  # noqa: PLR0913
     interpolation_target: Spline,
     harmonised_spline: Spline,
@@ -546,39 +515,3 @@ def harmonise_splines(
     )
 
     return harmonised_spline
-
-
-def biased_corrected_harmonisee(
-    splines: dict[str, Spline],
-    harmonisation_time: Union[int, float],
-    **kwargs: Any,
-) -> Any:
-    """
-    Compute the biased corrected spline
-
-    This is the harmonisee matches the target spline wrt the zero-order
-    derivative.
-
-    Parameters
-    ----------
-    splines
-        splines of target and harmonisee
-
-    harmonisation_time
-        time point at which harmonisee should be matched to the target
-
-    **kwargs
-        keyword arguments passed to make_interp_spline or polynomial_decay function
-
-    Returns
-    -------
-    biased_corrected_spline :
-        biased corrected spline
-    """
-    bias_corrected_spline = harmonise_constant_offset(
-        target=splines["target"],
-        harmonisee=splines["harmonisee"],
-        harmonisation_time=harmonisation_time,
-    )
-
-    return bias_corrected_spline

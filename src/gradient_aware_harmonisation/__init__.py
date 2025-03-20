@@ -8,10 +8,10 @@ from typing import Any, Optional, Union
 from gradient_aware_harmonisation import utils
 from gradient_aware_harmonisation.utils import (
     Timeseries,
-    biased_corrected_harmonisee,
-    compute_splines,
+    harmonise_constant_offset,
     harmonise_splines,
     interpolate_harmoniser,
+    timeseries_to_spline,
 )
 
 __version__ = importlib.metadata.version("gradient_aware_harmonisation")
@@ -82,24 +82,25 @@ def harmonise(  # noqa: PLR0913
         )
 
     # compute splines
-    splines = compute_splines(
-        target=target_timeseries, harmonisee=harmonisee_timeseries, **kwargs
-    )
+    target_spline = timeseries_to_spline(target_timeseries, **kwargs)
+    harmonisee_spline = timeseries_to_spline(harmonisee_timeseries, **kwargs)
 
     # compute harmonised spline
     harmonised_spline = harmonise_splines(
-        target=splines["target"],
-        harmonisee=splines["harmonisee"],
+        target=target_spline,
+        harmonisee=harmonisee_spline,
         harmonisation_time=harmonisation_time,
         **kwargs,
     )
 
     # get target of interpolation
     if interpolation_target == "original":
-        interpol_target = splines["harmonisee"]
+        interpol_target = harmonisee_spline
     if interpolation_target == "bias_corrected":
-        interpol_target = biased_corrected_harmonisee(
-            splines=splines, harmonisation_time=harmonisation_time, **kwargs
+        interpol_target = harmonise_constant_offset(
+            target=target_spline,
+            harmonisee=harmonisee_spline,
+            harmonisation_time=harmonisation_time,
         )
 
     # compute interpolation timeseries

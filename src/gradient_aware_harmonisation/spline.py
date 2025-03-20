@@ -4,7 +4,7 @@ Spline handling
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, Union, overload
+from typing import TYPE_CHECKING, Any, Protocol, Union, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -66,11 +66,11 @@ class SplineScipy:
     An adapter which wraps various classes from [scipy.interpolate][]
     """
 
-    domain: ClassVar[list[float, float]] = [
-        np.finfo(np.float64).tiny,
-        np.finfo(np.float64).max,
-    ]
-    """domain of spline (reals)"""
+    # domain: ClassVar[list[float, float]] = [
+    #     np.finfo(np.float64).tiny,
+    #     np.finfo(np.float64).max,
+    # ]
+    # """domain of spline (reals)"""
 
     scipy_spline: scipy.interpolate.BSpline | scipy.interpolate.PPoly
 
@@ -136,11 +136,11 @@ class SumOfSplines:
     spline_two: Spline
     """Second spline"""
 
-    domain: ClassVar[list[float, float]] = [
-        np.finfo(np.float64).tiny,
-        np.finfo(np.float64).max,
-    ]
-    """Domain of spline"""
+    # domain: ClassVar[list[float, float]] = [
+    #     np.finfo(np.float64).tiny,
+    #     np.finfo(np.float64).max,
+    # ]
+    # """Domain of spline"""
 
     @overload
     def __call__(self, x: int | float) -> int | float: ...
@@ -218,16 +218,17 @@ def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
             "add_constant_to_spline", requirement="scipy"
         ) from exc
 
-    print(in_spline)
     return SumOfSplines(
         spline_one=in_spline,
         spline_two=SplineScipy(
             scipy.interpolate.PPoly(
                 c=[[constant]],
-                # TODO: Problem: Currently domain is defined for SumOfSplines
-                #  and SplineScipy should be specified only once
-                #  preferably in SplineScipy
-                x=in_spline.domain,
+                # # TODO: Problem: Currently domain is defined for SumOfSplines
+                # #  and SplineScipy should be specified only once
+                # #  preferably in SplineScipy
+                # x=in_spline.domain,
+                # TODO: better solution for domain handling
+                x=[-1e8, 1e8],
             )
         ),
     )
