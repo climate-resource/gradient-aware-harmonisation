@@ -21,6 +21,7 @@ def harmonise(  # noqa: PLR0913
     convergence_timeseries: Timeseries | None = None,
     convergence_time: Optional[Union[int, float]] | None = None,
     convergence_method: ConvergenceMethod = ConvergenceMethod.COSINE,
+    # convergence_function: Callable[[Spline, Spline], Spline] | None = None,
 ) -> Timeseries:
     """
     Harmonise two timeseries
@@ -64,6 +65,9 @@ def harmonise(  # noqa: PLR0913
     harmonised_timeseries :
         Harmonised timeseries
     """
+    if convergence_time is None:
+        convergence_time = harmonisee_timeseries.time_axis.max()
+
     harmonised_spline = harmonise_splines(
         harmonisee=harmonisee_timeseries.to_spline(),
         target=target_timeseries.to_spline(),

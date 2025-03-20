@@ -18,6 +18,7 @@ import numpy.typing as npt
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
 from gradient_aware_harmonisation.spline import (
     Spline,
+    SplineCosineConvergence,
     SplineScipy,
     add_constant_to_spline,
 )
@@ -445,7 +446,8 @@ def harmonise_splines(
     target: Spline,
     harmonisee: Spline,
     harmonisation_time: Union[int, float],
-    **kwargs: Any,
+    convergence_spline: Spline,
+    convergence_time: Union[int, float],
 ) -> Spline:
     """
     Harmonises two splines by matching a harmonisee to a target spline
@@ -461,8 +463,11 @@ def harmonise_splines(
     harmonisation_time
         time point at which harmonisee should be matched to the target
 
-    **kwargs
-        keyword arguments passed to make_interp_spline or polynomial_decay function
+    convergence_spline
+        Spline to which the harmonised timeseries should converge
+
+    convergence_time
+        Time at which the result should return to `convergence_spline`
 
     Returns
     -------
@@ -487,10 +492,20 @@ def harmonise_splines(
     )
 
     # match zero-order derivatives
-    harmonised_spline = harmonise_constant_offset(
+    harmonised_spline_no_convergence = harmonise_constant_offset(
         target=target,
         harmonisee=harmonised_spline_first_derivative_only,
         harmonisation_time=harmonisation_time,
+    )
+
+    # apply convergence
+    # TODO: remove hard-coded use of SplineCosineConvergence
+    # and allow the user to specify the convergence method instead.
+    harmonised_spline = SplineCosineConvergence(
+        initial_time=harmonisation_time,
+        final_time=convergence_time,
+        initial=harmonised_spline_no_convergence,
+        final=convergence_spline,
     )
 
     return harmonised_spline
