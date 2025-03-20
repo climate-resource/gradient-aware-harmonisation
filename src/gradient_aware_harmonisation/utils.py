@@ -9,6 +9,7 @@ from enum import Enum, auto
 from typing import (
     Any,
     Optional,
+    Protocol,
     Union,
 )
 
@@ -442,15 +443,106 @@ def interpolate_harmoniser(  # noqa: PLR0913
     return interpolated_timeseries
 
 
-def harmonise_splines(
+class GetHarmonisedSplineLike(Protocol):
+    """
+    A callable which can generate a final, harmonised spline
+
+    The harmonised spline is generated based on a
+    harmonised spline that doesn't consider convergence
+    and a spline to which the final, harmonised spline should converge.
+    """
+
+    def __call__(
+        self,
+        harmonisation_time: Union[int, float],
+        convergence_time: Union[int, float],
+        harmonised_spline_no_convergence: Spline,
+        convergence_spline: Spline,
+    ) -> Spline:
+        """
+        Generate the harmonised spline
+
+        Parameters
+        ----------
+        harmonisation_time
+            Harmonisation time
+
+            This is the time at and before which
+            the solution should be equal to `harmonised_spline_no_convergence`.
+
+        convergence_time
+            Convergence time
+
+            This is the time at and after which
+            the solution should be equal to `convergence_spline`.
+
+        harmonised_spline_no_convergence
+            Harmonised spline that does not consider convergence
+
+        convergence_spline
+            The spline to which the result should converge
+
+        Returns
+        -------
+        :
+            Harmonised spline
+        """
+
+
+def get_cosine_decay_harmonised_spline(
+    harmonisation_time: Union[int, float],
+    convergence_time: Union[int, float],
+    harmonised_spline_no_convergence: Spline,
+    convergence_spline: Spline,
+) -> SplineCosineConvergence:
+    """
+    Generate the harmonised spline
+
+    Parameters
+    ----------
+    harmonisation_time
+        Harmonisation time
+
+        This is the time at and before which
+        the solution should be equal to `harmonised_spline_no_convergence`.
+
+    convergence_time
+        Convergence time
+
+        This is the time at and after which
+        the solution should be equal to `convergence_spline`.
+
+    harmonised_spline_no_convergence
+        Harmonised spline that does not consider convergence
+
+    convergence_spline
+        The spline to which the result should converge
+
+    Returns
+    -------
+    :
+        Harmonised spline
+    """
+    return SplineCosineConvergence(
+        initial_time=harmonisation_time,
+        final_time=convergence_time,
+        initial=harmonised_spline_no_convergence,
+        final=convergence_spline,
+    )
+
+
+def harmonise_splines(  # noqa: PLR0913
     target: Spline,
     harmonisee: Spline,
     harmonisation_time: Union[int, float],
     convergence_spline: Spline,
     convergence_time: Union[int, float],
+    get_harmonised_spline: GetHarmonisedSplineLike = get_cosine_decay_harmonised_spline,
 ) -> Spline:
     """
-    Harmonises two splines by matching a harmonisee to a target spline
+    Harmonises two splines by matching a harmonisee to a target
+
+    Also considers convergence, i.e. the long-term value of the result
 
     Parameters
     ----------
@@ -498,14 +590,11 @@ def harmonise_splines(
         harmonisation_time=harmonisation_time,
     )
 
-    # apply convergence
-    # TODO: remove hard-coded use of SplineCosineConvergence
-    # and allow the user to specify the convergence method instead.
-    harmonised_spline = SplineCosineConvergence(
-        initial_time=harmonisation_time,
-        final_time=convergence_time,
-        initial=harmonised_spline_no_convergence,
-        final=convergence_spline,
+    harmonised_spline = get_harmonised_spline(
+        harmonisation_time=harmonisation_time,
+        convergence_time=convergence_time,
+        harmonised_spline_no_convergence=harmonised_spline_no_convergence,
+        convergence_spline=convergence_spline,
     )
 
     return harmonised_spline
