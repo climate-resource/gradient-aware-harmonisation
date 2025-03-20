@@ -10,7 +10,8 @@ In this module, we need to test a few things:
       (or even request harmonisation on a timepoint not in our timeseries)?
     - more complicated/realistic time axes (e.g. not integer steps)
 
-- both zeroth-order and first-order continuity in all cases
+- both zeroth-order and first-order continuity
+  at the harmonisation time and the convergence time in all cases
 """
 
 import numpy as np
@@ -21,50 +22,59 @@ from gradient_aware_harmonisation.utils import Timeseries, harmonise_splines
 
 scipy = pytest.importorskip("scipy")
 
-# Can't start with 'test' as then pytest thinks it's a test
-tst_criteria = pytest.mark.parametrize("test_criterion", ("zero-order", "first-order"))
-
 
 def check_continuity(  # noqa: PLR0913
-    test_criterion, harmonisation_time, harmonised, target, rtol=1e-8, atol=0.0
+    *,
+    harmonised,
+    target,
+    harmonisation_time,
+    convergence_spline,
+    convergence_time,
+    rtol=1e-8,
+    atol=0.0,
 ):
-    if test_criterion == "zero-order":
-        # test absolute value
-        np.testing.assert_allclose(
-            harmonised(harmonisation_time),
-            target(harmonisation_time),
-            rtol=rtol,
-            atol=atol,
-            err_msg="Difference in zero-order values",
-        )
+    # Absolute value at harmonisation time
+    np.testing.assert_allclose(
+        harmonised(harmonisation_time),
+        target(harmonisation_time),
+        rtol=rtol,
+        atol=atol,
+        err_msg="Difference in zero-order values at harmonisation time",
+    )
 
-    elif test_criterion == "first-order":
-        # test first derivative
-        np.testing.assert_allclose(
-            harmonised.derivative()(harmonisation_time),
-            target.derivative()(harmonisation_time),
-            rtol=rtol,
-            atol=atol,
-            err_msg="Difference in first-derivative",
-        )
+    # First-derivate at harmonisation time
+    np.testing.assert_allclose(
+        harmonised.derivative()(harmonisation_time),
+        target.derivative()(harmonisation_time),
+        rtol=rtol,
+        atol=atol,
+        err_msg="Difference in first-derivative at harmonisation time",
+    )
 
-    else:
-        raise NotImplementedError(test_criterion)
+    # Absolute value at convergence time
+    np.testing.assert_allclose(
+        harmonised(convergence_time),
+        convergence_spline(convergence_time),
+        rtol=rtol,
+        atol=atol,
+        err_msg="Difference in zero-order values at convergence time",
+    )
+
+    # First-derivate at convergence time
+    np.testing.assert_allclose(
+        harmonised.derivative()(convergence_time),
+        convergence_spline.derivative()(convergence_time),
+        rtol=rtol,
+        atol=atol,
+        err_msg="Difference in first-derivative at convergence time",
+    )
 
 
 @pytest.mark.parametrize("harmonisation_time", (1.0, 3.0))
 @pytest.mark.parametrize("convergence_time", (None, 3.0))
-@tst_criteria
-def test_target_and_harmonisee_equal(
-    test_criterion, convergence_time, harmonisation_time
-):
+def test_target_and_harmonisee_equal(convergence_time, harmonisation_time):
     time_axis = np.array([0.0, 1.0, 2.0, 3.0])
-    timeseries_target = Timeseries(time_axis=time_axis, values=time_axis**2)
-    target = SplineScipy(
-        scipy.interpolate.make_interp_spline(
-            timeseries_target.time_axis, timeseries_target.values
-        )
-    )
+    target = Timeseries(time_axis=time_axis, values=time_axis**2).to_spline()
 
     harmon_spline = harmonise_splines(
         target=target,
@@ -74,19 +84,17 @@ def test_target_and_harmonisee_equal(
     )
 
     check_continuity(
-        test_criterion=test_criterion,
-        harmonisation_time=harmonisation_time,
         harmonised=harmon_spline,
         target=target,
+        harmonisation_time=harmonisation_time,
+        convergence_spline=target,
+        convergence_time=convergence_time,
     )
 
 
 @pytest.mark.parametrize("harmonisation_time", (1.0, 3.0))
 @pytest.mark.parametrize("convergence_time", (None, 3.0))
-@tst_criteria
-def test_target_and_harmonisee_differ(
-    test_criterion, convergence_time, harmonisation_time
-):
+def test_target_and_harmonisee_differ(convergence_time, harmonisation_time):
     time_axis_target = np.array([0.0, 1.0, 2.0, 3.0])
     timeseries_target = Timeseries(
         time_axis=time_axis_target, values=time_axis_target ** (1 / 2)
@@ -127,8 +135,7 @@ def test_target_and_harmonisee_differ(
 
 @pytest.mark.parametrize("harmonisation_time", (2003.0,))
 @pytest.mark.parametrize("convergence_time", (None, 2005.0))
-@tst_criteria
-def test_more_realistic(test_criterion, convergence_time, harmonisation_time):
+def test_more_realistic(convergence_time, harmonisation_time):
     """
     Both testing more realistic data but also a time axis that has integer values
     """

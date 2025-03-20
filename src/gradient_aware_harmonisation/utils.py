@@ -5,8 +5,8 @@ Utility functions
 from __future__ import annotations
 
 import inspect
+from enum import Enum, auto
 from typing import (
-    TYPE_CHECKING,
     Any,
     Optional,
     Union,
@@ -14,7 +14,6 @@ from typing import (
 
 import numpy as np
 import numpy.typing as npt
-from attrs import define, field
 
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
 from gradient_aware_harmonisation.spline import (
@@ -22,39 +21,7 @@ from gradient_aware_harmonisation.spline import (
     SplineScipy,
     add_constant_to_spline,
 )
-
-if TYPE_CHECKING:
-    pass
-
-
-@define
-class Timeseries:
-    """
-    Timeseries class
-    """
-
-    time_axis: npt.NDArray[Any]
-    values: npt.NDArray[Any] = field()
-
-    @values.validator
-    def values_validator(self, attribute: Any, value: Any) -> None:
-        """
-        Validate the values
-
-        Parameters
-        ----------
-        attribute
-            Attribute to validate
-
-        value
-            Value to validate
-        """
-        if value.size != self.time_axis.size:
-            msg = (
-                f"{attribute.name} must have the same size as time_axis. "
-                f"Received {value.size=} {self.time_axis.size=}"
-            )
-            raise ValueError(msg)
+from gradient_aware_harmonisation.timeseries import Timeseries
 
 
 def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> SplineScipy:
@@ -160,6 +127,18 @@ def harmonise_constant_offset(
     harmonised = add_constant_to_spline(in_spline=harmonisee, constant=diff)
 
     return harmonised
+
+
+class ConvergenceMethod(Enum):
+    """Options for the method to use to converge to the convergence timeseries"""
+
+    COSINE = auto()
+    """Cosine convergence"""
+
+    # TODO: consider just listing different versions of polynomial here,
+    # or using dependency injection for convergence instead.
+    POLYNOMIAL = auto()
+    """Polynomial convergence"""
 
 
 def cosine_decay(decay_steps: int, initial_weight: float = 1.0) -> npt.NDArray[Any]:
