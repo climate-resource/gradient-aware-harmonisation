@@ -20,7 +20,7 @@ def harmonise(  # noqa: PLR0913
     harmonisation_time: Union[int, float],
     convergence_timeseries: Timeseries | None = None,
     convergence_time: Optional[Union[int, float]] | None = None,
-    convergence_method: ConvergenceMethod = ConvergenceMethod.COSINE,
+    # convergence_method: ConvergenceMethod = ConvergenceMethod.COSINE,
     # convergence_function: Callable[[Spline, Spline], Spline] | None = None,
 ) -> Timeseries:
     """
@@ -74,12 +74,10 @@ def harmonise(  # noqa: PLR0913
         harmonisation_time=harmonisation_time,
         convergence_spline=convergence_timeseries.to_spline(),
         convergence_time=convergence_time,
-        convergence_method=convergence_method,
+        #convergence_method=convergence_method,
     )
 
-    harmonised_timeseries = harmonised_spline.to_timeseries(
-        time_axis=harmonisee_timeseries.time_axis
-    )
+    harmonised_timeseries = harmonised_spline(harmonisee_timeseries.time_axis)
 
     return harmonised_timeseries
 
