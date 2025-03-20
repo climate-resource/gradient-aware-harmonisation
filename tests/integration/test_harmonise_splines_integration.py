@@ -21,7 +21,8 @@ from gradient_aware_harmonisation.utils import Timeseries, harmonise_splines
 
 scipy = pytest.importorskip("scipy")
 
-test_criteria = pytest.mark.parametrize("test_criterion", ("zero-order", "first-order"))
+# Can't start with 'test' as then pytest thinks it's a test
+tst_criteria = pytest.mark.parametrize("test_criterion", ("zero-order", "first-order"))
 
 
 def check_continuity(  # noqa: PLR0913
@@ -53,7 +54,7 @@ def check_continuity(  # noqa: PLR0913
 
 @pytest.mark.parametrize("harmonisation_time", (1.0, 3.0))
 @pytest.mark.parametrize("convergence_time", (None, 3.0))
-@test_criteria
+@tst_criteria
 def test_target_and_harmonisee_equal(
     test_criterion, convergence_time, harmonisation_time
 ):
@@ -82,7 +83,7 @@ def test_target_and_harmonisee_equal(
 
 @pytest.mark.parametrize("harmonisation_time", (1.0, 3.0))
 @pytest.mark.parametrize("convergence_time", (None, 3.0))
-@test_criteria
+@tst_criteria
 def test_target_and_harmonisee_differ(
     test_criterion, convergence_time, harmonisation_time
 ):
@@ -126,7 +127,7 @@ def test_target_and_harmonisee_differ(
 
 @pytest.mark.parametrize("harmonisation_time", (2003.0,))
 @pytest.mark.parametrize("convergence_time", (None, 2005.0))
-@test_criteria
+@tst_criteria
 def test_more_realistic(test_criterion, convergence_time, harmonisation_time):
     """
     Both testing more realistic data but also a time axis that has integer values
