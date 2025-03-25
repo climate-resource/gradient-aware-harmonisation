@@ -253,7 +253,7 @@ class ProductOfSplines:
             ProductOfSplines(self.spline_one.derivative(), self.spline_two),
         )
 
-    def antiderivative(self) -> SumOfSplines:
+    def antiderivative(self, x) -> SumOfSplines:
         """
         Calculate the anti-derivative/integral of self
 
@@ -262,144 +262,17 @@ class ProductOfSplines:
         :
             Anti-derivative of self
         """
-        return SumOfSplines(
-            ProductOfSplines(self.spline_one, self.spline_two.antiderivative()),
-            ProductOfSplines(
-                self.spline_one.derivative(), self.spline_two.antiderivative()
+        try:
+            import scipy.integrate
+        except ImportError as exc:
+            raise MissingOptionalDependencyError(
+                "timeseries_to_spline", requirement="scipy"
+            ) from exc
+
+        return [scipy.integrate.quad(
+            SumOfSplines(
+                ProductOfSplines(self.spline_one, self.spline_two.derivative()),
+                ProductOfSplines(self.spline_one.derivative(), self.spline_two)
             ),
-        )
-
-
-@define
-class SplineCosineConvergence:
-    """
-    Spline with cosine-decay from one spline to another
-
-    Between `initial_time` and `final_time`,
-    we return values based on a cosine-decay between `initial` and `final`.
-    """
-
-    initial_time: Union[float, int]
-    """
-    At and before this time, we return values from `initial`
-    """
-
-    final_time: Union[float, int]
-    """
-    At and after this time, we return values from `final`
-    """
-
-    initial: Spline
-    """
-    The spline whose values we use at and before `initial_time`
-    """
-
-    final: Spline
-    """
-    The spline whose values we use at and after `final_time`
-    """
-
-    # domain: ClassVar[list[float, float]] = [
-    #     np.finfo(np.float64).tiny,
-    #     np.finfo(np.float64).max,
-    # ]
-    # """Domain of spline"""
-
-    @overload
-    def __call__(self, x: int | float) -> int | float: ...
-
-    @overload
-    def __call__(self, x: NP_FLOAT_OR_INT) -> NP_FLOAT_OR_INT: ...
-
-    @overload
-    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
-
-    def __call__(
-        self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
-    ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
-        """
-        Evaluate the spline at a given x-value
-
-        Parameters
-        ----------
-        x
-            x-value
-
-        Returns
-        -------
-        :
-            Value of the spline at `x`
-        """
-        if x <= self.initial_time:
-            return self.initial(x)
-
-        if x >= self.final_time:
-            return self.final(x)
-
-        angle = np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
-        gamma = 0.5 * (1 + np.cos(angle))
-        res = gamma * self.initial(x) + (1 - gamma) * self.final(x)
-
-        return res
-
-    def derivative(self) -> SumOfSplines:
-        """
-        Calculate the derivative of self
-
-        Returns
-        -------
-        :
-            Derivative of self
-        """
-        raise NotImplementedError
-
-    def antiderivative(self) -> SumOfSplines:
-        """
-        Calculate the anti-derivative/integral of self
-
-        Returns
-        -------
-        :
-            Anti-derivative of self
-        """
-        raise NotImplementedError
-
-
-def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
-    """
-    Add a constant value to a spline
-
-    Parameters
-    ----------
-    in_spline
-        Input spline
-
-    constant
-        Constant to add
-
-    Returns
-    -------
-    :
-        Spline plus the given constant
-    """
-    try:
-        import scipy.interpolate
-    except ImportError as exc:
-        raise MissingOptionalDependencyError(
-            "add_constant_to_spline", requirement="scipy"
-        ) from exc
-
-    return SumOfSplines(
-        spline_one=in_spline,
-        spline_two=SplineScipy(
-            scipy.interpolate.PPoly(
-                c=[[constant]],
-                # # TODO: Problem: Currently domain is defined for SumOfSplines
-                # #  and SplineScipy should be specified only once
-                # #  preferably in SplineScipy
-                # x=in_spline.domain,
-                # TODO: better solution for domain handling
-                x=[-1e8, 1e8],
-            )
-        ),
-    )
+                i, i+0.001
+        )[0] for i in x]

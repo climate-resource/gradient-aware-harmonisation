@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gradient_aware_harmonisation import harmonise
-from gradient_aware_harmonisation.helpers import plotting
+from gradient_aware_harmonisation.plotting import plotting
 from gradient_aware_harmonisation.utils import (
     Timeseries,
     cosine_decay,

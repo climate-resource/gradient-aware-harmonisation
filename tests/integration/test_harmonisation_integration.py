@@ -38,6 +38,7 @@ def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_ti
         harmonisee_timeseries=harmonisee,
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
+        convergence_timeseries=harmonisee
     )
 
     # We expect to get out what we put in as it's already harmonised

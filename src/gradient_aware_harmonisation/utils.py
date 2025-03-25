@@ -4,11 +4,8 @@ Utility functions
 
 from __future__ import annotations
 
-import inspect
-from enum import Enum, auto
 from typing import (
     Any,
-    Optional,
     Protocol,
     Union,
 )
@@ -19,14 +16,13 @@ import numpy.typing as npt
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
 from gradient_aware_harmonisation.spline import (
     Spline,
-    SplineCosineConvergence,
     SplineScipy,
-    add_constant_to_spline,
+    SumOfSplines,
 )
 from gradient_aware_harmonisation.timeseries import Timeseries
 
 
-def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> SplineScipy:
+def timeseries_to_spline(timeseries: Timeseries) -> SplineScipy:
     """
     Estimates splines from timeseries arrays.
 
@@ -34,9 +30,6 @@ def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> SplineScipy:
     ----------
     timeseries
         timeseries of format dict(time_axis = np.array, values = np.array)
-
-    **kwargs
-        additional arguments to ``scipy.interpolate.make_interp_spline``
 
     Returns
     -------
@@ -57,262 +50,59 @@ def timeseries_to_spline(timeseries: Timeseries, **kwargs: Any) -> SplineScipy:
             "timeseries_to_spline", requirement="scipy"
         ) from exc
 
-    # extract from kwargs arguments of make_interp_spline
-    args_make_interp_spline = inspect.getfullargspec(
-        scipy.interpolate.make_interp_spline
-    ).args
-    kwargs_spline: dict[str, Any] = {
-        f"{key}": kwargs[key] for key in kwargs if key in args_make_interp_spline
-    }
-
-    if "k" in kwargs_spline:
-        if len(timeseries.time_axis) <= kwargs_spline["k"]:
-            raise ValueError(
-                f"Spline degree {kwargs['k']} is smaller or equal to length "
-                + f"of provided time_axis (={len(timeseries.time_axis)}) "
-                + "in timeseries object.'"
-                " \n But must be greater than spline degree.",
-            )
-    else:
-        default_args = inspect.getfullargspec(
-            scipy.interpolate.make_interp_spline
-        ).defaults
-
-        if default_args is not None:
-            default_k = default_args.index(0)
-            if len(timeseries.time_axis) <= default_k:
-                raise ValueError(
-                    f"Default spline degree k={default_k} is smaller or equal "
-                    + "to length of provided time_axis "
-                    + f"(={len(timeseries.time_axis)}) in timeseries object."
-                    + "\n But must be greater than spline degree.",
-                )
-
     spline = SplineScipy(
         scipy.interpolate.make_interp_spline(
-            timeseries.time_axis, timeseries.values, **kwargs_spline
+            timeseries.time_axis, timeseries.values
         )
     )
 
     return spline
 
 
-def harmonise_constant_offset(
-    target: Spline,
-    harmonisee: Spline,
-    harmonisation_time: Union[int, float],
-) -> Spline:
+class GetHarmonisedSplineLike(Protocol):
     """
-    Harmonise timeseries using a constant offset
+    A callable which can generate a final, harmonised spline
 
-    In other words, the timeseries are harmonised
-    by simply adding a constant to the harmonisee
-    such that its value matches the value of the target at the harmonisation time.
-
-    Parameters
-    ----------
-    target
-        Target for harmonisation
-
-    harmonisee
-        Function/spline to harmonisation
-
-    harmonisation_time
-        Time at which `target` and `harmonisee` should match exactly
-
-    Returns
-    -------
-    :
-        Harmonised spline
+    The harmonised spline is generated based on a
+    harmonised spline that doesn't consider convergence
+    and a spline to which the final, harmonised spline should converge.
     """
-    diff = target(harmonisation_time) - harmonisee(harmonisation_time)
-    harmonised = add_constant_to_spline(in_spline=harmonisee, constant=diff)
 
-    return harmonised
+    def __call__(
+        self,
+        harmonisation_time: Union[int, float],
+        convergence_time: Union[int, float],
+        harmonised_spline_no_convergence: Spline,
+        convergence_spline: Spline,
+    ) -> Spline:
+        """
+        Generate the harmonised spline
 
+        Parameters
+        ----------
+        harmonisation_time
+            Harmonisation time
 
-class ConvergenceMethod(Enum):
-    """Options for the method to use to converge to the convergence timeseries"""
+            This is the time at and before which
+            the solution should be equal to `harmonised_spline_no_convergence`.
 
-    COSINE = auto()
-    """Cosine convergence"""
+        convergence_time
+            Convergence time
 
-    # TODO: consider just listing different versions of polynomial here,
-    # or using dependency injection for convergence instead.
-    POLYNOMIAL = auto()
-    """Polynomial convergence"""
+            This is the time at and after which
+            the solution should be equal to `convergence_spline`.
 
+        harmonised_spline_no_convergence
+            Harmonised spline that does not consider convergence
 
-def cosine_decay(decay_steps: int, initial_weight: float = 1.0) -> npt.NDArray[Any]:
-    """
-    Compute cosine decay function
+        convergence_spline
+            The spline to which the result should converge
 
-    Parameters
-    ----------
-    decay_steps
-        number of steps to decay over
-
-    initial_weight
-        starting weight with default = 1.
-
-    Returns
-    -------
-    weight_seq :
-        weight sequence
-
-    Reference
-    ---------
-    + `cosine decay as implemented in tensorflow.keras <https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/CosineDecay>`_
-    """
-    # initialize weight sequence
-    weight_seq: list[float] = []
-    # loop over number of steps
-    for step in range(decay_steps):
-        cosine_decay = 0.5 * (1 + np.cos(np.pi * step / (decay_steps - 1)))
-        weight_seq.append(initial_weight * cosine_decay)
-
-    return np.concatenate((weight_seq,))
-
-
-def polynomial_decay(
-    decay_steps: int, pow: Union[float, int], initial_weight: float = 1.0
-) -> npt.NDArray[Any]:
-    """
-    Compute polynomial decay function
-
-    Parameters
-    ----------
-    decay_steps
-        number of steps to decay over
-
-    pow
-        power of polynomial
-        expected to be greater or equal to 1.
-
-    initial_weight
-        starting weight, default is 1.
-
-    Returns
-    -------
-    weight_seq :
-        weight sequence
-
-    Raises
-    ------
-    ValueError
-        Power of polynomial is expected to be greater or equal to 1.
-    """
-    if not pow >= 1.0:
-        msg = (
-            "Power of polynomial decay is expected to be greater than or equal to 1. ",
-            f"Got {pow=}.",
-        )
-        raise ValueError(msg)
-
-    # initialize weight sequence
-    weight_seq: list[float] = []
-    # loop over steps
-    for step in range(decay_steps):
-        weight = initial_weight * (1 - step / (decay_steps - 1)) ** pow
-        weight_seq.append(weight)
-
-    return np.concatenate((weight_seq,))
-
-
-def decay_weights(
-    timeseries_harmonisee: Timeseries,
-    harmonisation_time: Union[int, float],
-    convergence_time: Optional[Union[int, float]],
-    decay_method: str,
-    **kwargs: Any,
-) -> npt.NDArray[Any]:
-    """
-    Compute a sequence of decaying weights according to specified decay method.
-
-    Parameters
-    ----------
-    timeseries_harmonisee
-        timeseries of harmonised spline
-
-    harmonisation_time
-        point in time_axis at which harmonise should be matched to target
-
-    convergence_time
-        time point at which harmonisee should match target function
-
-    decay_method
-        decay method to use
-        If decay_method="polynomial" power of the polynmials (arg: 'pow') is required;
-        'pow' is expected to be greater or equal to 1.
-
-    Returns
-    -------
-    weight_sequence :
-        sequence of weights for interpolation
-
-    Raises
-    ------
-    ValueError
-        Currently supported values for `decay_method` are: "cosine", "polynomial"
-    """
-    if decay_method not in ["cosine", "polynomial"]:
-        raise ValueError(  # noqa: TRY003
-            "Currently supported values for `decay_method`",
-            f"are 'cosine' and 'polynomial'. Got {decay_method=}.",
-        )
-
-    if (decay_method == "polynomial") and ("pow" not in kwargs.keys()):
-        raise TypeError(  # noqa: TRY003
-            "The decay_method='polynomial' expects a 'pow' argument.",
-            "Please pass a 'pow' argument greater or equal to 1.",
-        )
-
-    if not np.isin(
-        np.float32(timeseries_harmonisee.time_axis), np.float32(harmonisation_time)
-    ).any():
-        raise NotImplementedError(
-            f"{harmonisation_time=} is not a value in "
-            f"{timeseries_harmonisee.time_axis=}"
-        )
-    # initialize variable
-    fill_with_zeros: npt.NDArray[Any]
-
-    if convergence_time is None:
-        time_interp = timeseries_harmonisee.time_axis[
-            np.where(timeseries_harmonisee.time_axis >= harmonisation_time)
-        ]
-        # decay_range = len(time_axis)
-        fill_with_zeros = np.array([])
-
-    else:
-        time_interp = timeseries_harmonisee.time_axis[
-            np.where(
-                np.logical_and(
-                    timeseries_harmonisee.time_axis >= harmonisation_time,
-                    timeseries_harmonisee.time_axis <= convergence_time,
-                )
-            )
-        ]
-
-        time_match_harmonisee = timeseries_harmonisee.time_axis[
-            np.where(timeseries_harmonisee.time_axis > convergence_time)
-        ]
-
-        fill_with_zeros = np.zeros_like(time_match_harmonisee)
-
-    # decay function
-    if decay_method == "cosine":
-        weight_seq = cosine_decay(len(time_interp))
-    elif decay_method == "polynomial":
-        # extract required additional argument
-        pow: Union[float, int] = kwargs["pow"]
-        weight_seq = polynomial_decay(len(time_interp), pow=pow)
-
-    # compute weight
-    weight_sequence: npt.NDArray[Any] = np.concatenate((weight_seq, fill_with_zeros))
-
-    return weight_sequence
-
+        Returns
+        -------
+        :
+            Harmonised spline
+        """
 
 def interpolate_timeseries(
     harmonisee: Spline,
@@ -377,224 +167,41 @@ def interpolate_timeseries(
     return timeseries_interpolated
 
 
-def interpolate_harmoniser(  # noqa: PLR0913
-    interpolation_target: Spline,
-    harmonised_spline: Spline,
-    harmonisee_timeseries: Timeseries,
-    convergence_time: Optional[Union[int, float]],
-    harmonisation_time: Union[int, float],
-    decay_method: str = "cosine",
-    **kwargs: Any,
-) -> Timeseries:
+def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
     """
-    Compute an interpolated timeseries
-
-    The interpolated timeseries is generated by interpolating
-    from the harmonised_spline to the interpolation target.
+    Add a constant value to a spline
 
     Parameters
     ----------
-    interpolation_target
-        interpolation target, i.e., the target
-        with which predicitons the interpolation spline match after the convergence
-        time?
-        Usually this will be either the original harmonisee
-        or the biased-corrected harmonisee
+    in_spline
+        Input spline
 
-    harmonised_spline
-        harmonised spline that matches with target wrt zero-and first-order derivative
-
-    harmonisee_timeseries
-        harmonisee timeseries
-
-    convergence_time
-        time point where interpolation_target and harmonised spline should match
-
-    harmonisation_time
-        time point where harmonised spline should match the original target
-
-    decay_method
-        decay method used for computing weights
-        that interpolate the spline, currently supported methods are 'cosine'.
-
-    Returns
-    -------
-    interpolated_timeseries :
-        interpolated values
-    """
-    # get interpolation weights
-    weights = decay_weights(
-        harmonisee_timeseries,
-        convergence_time=convergence_time,
-        harmonisation_time=harmonisation_time,
-        decay_method=decay_method,
-        **kwargs,
-    )
-
-    # compute interpolation spline
-    interpolated_timeseries = interpolate_timeseries(
-        interpolation_target,
-        harmonised_spline,
-        harmonisation_time,
-        harmonisee_timeseries,
-        weights,
-    )
-
-    return interpolated_timeseries
-
-
-class GetHarmonisedSplineLike(Protocol):
-    """
-    A callable which can generate a final, harmonised spline
-
-    The harmonised spline is generated based on a
-    harmonised spline that doesn't consider convergence
-    and a spline to which the final, harmonised spline should converge.
-    """
-
-    def __call__(
-        self,
-        harmonisation_time: Union[int, float],
-        convergence_time: Union[int, float],
-        harmonised_spline_no_convergence: Spline,
-        convergence_spline: Spline,
-    ) -> Spline:
-        """
-        Generate the harmonised spline
-
-        Parameters
-        ----------
-        harmonisation_time
-            Harmonisation time
-
-            This is the time at and before which
-            the solution should be equal to `harmonised_spline_no_convergence`.
-
-        convergence_time
-            Convergence time
-
-            This is the time at and after which
-            the solution should be equal to `convergence_spline`.
-
-        harmonised_spline_no_convergence
-            Harmonised spline that does not consider convergence
-
-        convergence_spline
-            The spline to which the result should converge
-
-        Returns
-        -------
-        :
-            Harmonised spline
-        """
-
-
-def get_cosine_decay_harmonised_spline(
-    harmonisation_time: Union[int, float],
-    convergence_time: Union[int, float],
-    harmonised_spline_no_convergence: Spline,
-    convergence_spline: Spline,
-) -> SplineCosineConvergence:
-    """
-    Generate the harmonised spline
-
-    Parameters
-    ----------
-    harmonisation_time
-        Harmonisation time
-
-        This is the time at and before which
-        the solution should be equal to `harmonised_spline_no_convergence`.
-
-    convergence_time
-        Convergence time
-
-        This is the time at and after which
-        the solution should be equal to `convergence_spline`.
-
-    harmonised_spline_no_convergence
-        Harmonised spline that does not consider convergence
-
-    convergence_spline
-        The spline to which the result should converge
+    constant
+        Constant to add
 
     Returns
     -------
     :
-        Harmonised spline
+        Spline plus the given constant
     """
-    return SplineCosineConvergence(
-        initial_time=harmonisation_time,
-        final_time=convergence_time,
-        initial=harmonised_spline_no_convergence,
-        final=convergence_spline,
+    try:
+        import scipy.interpolate
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "add_constant_to_spline", requirement="scipy"
+        ) from exc
+
+    return SumOfSplines(
+        spline_one=in_spline,
+        spline_two=SplineScipy(
+            scipy.interpolate.PPoly(
+                c=[[constant]],
+                # # TODO: Problem: Currently domain is defined for SumOfSplines
+                # #  and SplineScipy should be specified only once
+                # #  preferably in SplineScipy
+                # x=in_spline.domain,
+                # TODO: better solution for domain handling
+                x=[-1e8, 1e8],
+            )
+        ),
     )
-
-
-def harmonise_splines(  # noqa: PLR0913
-    target: Spline,
-    harmonisee: Spline,
-    harmonisation_time: Union[int, float],
-    convergence_spline: Spline,
-    convergence_time: Union[int, float],
-    get_harmonised_spline: GetHarmonisedSplineLike = get_cosine_decay_harmonised_spline,
-) -> Spline:
-    """
-    Harmonises two splines by matching a harmonisee to a target
-
-    Also considers convergence, i.e. the long-term value of the result
-
-    Parameters
-    ----------
-    target
-        target spline
-
-    harmonisee
-        harmonisee spline
-
-    harmonisation_time
-        time point at which harmonisee should be matched to the target
-
-    convergence_spline
-        Spline to which the harmonised timeseries should converge
-
-    convergence_time
-        Time at which the result should return to `convergence_spline`
-
-    Returns
-    -------
-    harmonised_spline :
-        harmonised spline (harmonised spline
-        and target have same zero-and first-order derivative at harmonisation time)
-    """
-    # compute derivatives
-    target_dspline = target.derivative()
-    harmonisee_dspline = harmonisee.derivative()
-
-    # match first-order derivatives
-    harmonised_first_derivative = harmonise_constant_offset(
-        target=target_dspline,
-        harmonisee=harmonisee_dspline,
-        harmonisation_time=harmonisation_time,
-    )
-
-    # integrate to match zero-order derivative
-    harmonised_spline_first_derivative_only = (
-        harmonised_first_derivative.antiderivative()
-    )
-
-    # match zero-order derivatives
-    harmonised_spline_no_convergence = harmonise_constant_offset(
-        target=target,
-        harmonisee=harmonised_spline_first_derivative_only,
-        harmonisation_time=harmonisation_time,
-    )
-
-    harmonised_spline = get_harmonised_spline(
-        harmonisation_time=harmonisation_time,
-        convergence_time=convergence_time,
-        harmonised_spline_no_convergence=harmonised_spline_no_convergence,
-        convergence_spline=convergence_spline,
-    )
-
-    return harmonised_spline
