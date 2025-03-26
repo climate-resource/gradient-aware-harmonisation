@@ -10,8 +10,6 @@ import numpy as np
 import numpy.typing as npt
 from attrs import define
 
-from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
-
 if TYPE_CHECKING:
     import scipy.interpolate
     from typing_extensions import TypeAlias
@@ -253,7 +251,7 @@ class ProductOfSplines:
             ProductOfSplines(self.spline_one.derivative(), self.spline_two),
         )
 
-    def antiderivative(self, x) -> SumOfSplines:
+    def antiderivative(self) -> SumOfSplines:
         """
         Calculate the anti-derivative/integral of self
 
@@ -262,17 +260,4 @@ class ProductOfSplines:
         :
             Anti-derivative of self
         """
-        try:
-            import scipy.integrate
-        except ImportError as exc:
-            raise MissingOptionalDependencyError(
-                "timeseries_to_spline", requirement="scipy"
-            ) from exc
-
-        return [scipy.integrate.quad(
-            SumOfSplines(
-                ProductOfSplines(self.spline_one, self.spline_two.derivative()),
-                ProductOfSplines(self.spline_one.derivative(), self.spline_two)
-            ),
-                i, i+0.001
-        )[0] for i in x]
+        raise NotImplementedError
