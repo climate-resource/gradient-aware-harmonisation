@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import (
     Any,
+    Optional,
     Protocol,
     Union,
 )
@@ -13,6 +14,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
+from gradient_aware_harmonisation.convergence import get_cosine_decay_harmonised_spline
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
 from gradient_aware_harmonisation.spline import (
     Spline,
@@ -51,9 +53,7 @@ def timeseries_to_spline(timeseries: Timeseries) -> SplineScipy:
         ) from exc
 
     spline = SplineScipy(
-        scipy.interpolate.make_interp_spline(
-            timeseries.time_axis, timeseries.values
-        )
+        scipy.interpolate.make_interp_spline(timeseries.time_axis, timeseries.values)
     )
 
     return spline
@@ -103,6 +103,53 @@ class GetHarmonisedSplineLike(Protocol):
         :
             Harmonised spline
         """
+
+
+def harmonise_splines(
+    harmonisee: Spline,
+    target: Spline,
+    harmonisation_time: Union[int, float],
+    converge_to: Spline,
+    convergence_time: Optional[Union[int, float]] | None = None,
+    get_harmonised_spline: GetHarmonisedSplineLike = get_cosine_decay_harmonised_spline,
+) -> Spline:
+    # compute derivatives of splines
+    target_dspline = target.derivative()
+    harmonisee_dspline = harmonisee.derivative()
+
+    # match first-order derivatives
+    diff_dspline = np.subtract(
+        target_dspline(harmonisation_time), harmonisee_dspline(harmonisation_time)
+    )
+
+    harmonised_first_derivative = add_constant_to_spline(
+        in_spline=harmonisee_dspline, constant=diff_dspline
+    )
+
+    # integrate to match zero-order derivative
+    harmonised_spline_first_derivative_only = (
+        harmonised_first_derivative.antiderivative()
+    )
+
+    # match zero-order derivatives
+    diff_spline = np.subtract(
+        target(harmonisation_time),
+        harmonised_spline_first_derivative_only(harmonisation_time),
+    )
+
+    harmonised_spline_no_convergence = add_constant_to_spline(
+        in_spline=harmonised_spline_first_derivative_only, constant=diff_spline
+    )
+
+    harmonised_spline = get_harmonised_spline(
+        harmonisation_time=harmonisation_time,
+        convergence_time=convergence_time,
+        harmonised_spline_no_convergence=harmonised_spline_no_convergence,
+        convergence_spline=converge_to,
+    )
+
+    return harmonised_spline
+
 
 def interpolate_timeseries(
     harmonisee: Spline,
