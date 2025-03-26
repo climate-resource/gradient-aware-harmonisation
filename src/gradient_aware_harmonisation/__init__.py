@@ -7,7 +7,7 @@ from typing import Optional, Union
 
 import numpy as np
 
-from gradient_aware_harmonisation.convergence import SplineCosineConvergence
+from gradient_aware_harmonisation.convergence import get_cosine_decay_harmonised_spline
 from gradient_aware_harmonisation.timeseries import Timeseries
 from gradient_aware_harmonisation.utils import (
     GetHarmonisedSplineLike,
@@ -24,7 +24,7 @@ def harmonise(  # noqa: PLR0913
     harmonisation_time: Union[int, float],
     convergence_timeseries: Timeseries | None = None,
     convergence_time: Optional[Union[int, float]] | None = None,
-    get_harmonised_spline: GetHarmonisedSplineLike = SplineCosineConvergence,
+    get_harmonised_spline: GetHarmonisedSplineLike = get_cosine_decay_harmonised_spline,
     # get_harmonised_spline: GetHarmonisedSplineLike = get_cosine_decay_harmonised_spline,
     # convergence_function: Callable[[Spline, Spline], Spline] | None = None,
 ) -> Timeseries:

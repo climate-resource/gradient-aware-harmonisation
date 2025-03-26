@@ -41,22 +41,9 @@ def check_continuity(  # noqa: PLR0913
         err_msg="Difference in zero-order values at harmonisation time",
     )
 
-    # TODO: figure out whether we want to go down the rabbit hole
-    # of derivatives of our outputs
-    # # First-derivate at harmonisation time
-    # np.testing.assert_allclose(
-    #     harmonised.derivative()(harmonisation_time),
-    #     target.derivative()(harmonisation_time),
-    #     rtol=rtol,
-    #     atol=atol,
-    #     err_msg="Difference in first-derivative at harmonisation time",
-    # )
-    delta = 1e-6
-    harmonised_deriv_approx = (
-        harmonised(harmonisation_time + delta) - harmonised(harmonisation_time)
-    ) / delta
+    # First-derivate at harmonisation time
     np.testing.assert_allclose(
-        harmonised_deriv_approx,
+        harmonised.derivative()(harmonisation_time),
         target.derivative()(harmonisation_time),
         rtol=rtol,
         atol=atol,
@@ -72,26 +59,13 @@ def check_continuity(  # noqa: PLR0913
         err_msg="Difference in zero-order values at convergence time",
     )
 
-    # # TODO: figure out whether we want to go down the rabbit hole
-    # # of derivatives of our outputs
-    # # First-derivate at convergence time
-    # np.testing.assert_allclose(
-    #     harmonised.derivative()(convergence_time),
-    #     convergence_spline.derivative()(convergence_time),
-    #     rtol=rtol,
-    #     atol=atol,
-    #     err_msg="Difference in first-derivative at convergence time",
-    # )
-    delta = 1e-6
-    harmonised_deriv_approx = (
-        harmonised(convergence_time + delta) - harmonised(convergence_time)
-    ) / delta
+    # First-derivate at convergence time
     np.testing.assert_allclose(
-        harmonised_deriv_approx,
+        harmonised.derivative()(convergence_time),
         convergence_spline.derivative()(convergence_time),
         rtol=rtol,
         atol=atol,
-        err_msg="Difference in first-derivative at harmonisation time",
+        err_msg="Difference in first-derivative at convergence time",
     )
 
 
