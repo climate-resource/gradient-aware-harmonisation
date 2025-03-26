@@ -3,18 +3,17 @@ Gradient-aware harmonisation of timeseries
 """
 
 import importlib.metadata
-import numpy as np
 from typing import Optional, Union
 
+import numpy as np
+
+from gradient_aware_harmonisation.convergence import SplineCosineConvergence
 from gradient_aware_harmonisation.timeseries import Timeseries
 from gradient_aware_harmonisation.utils import (
+    GetHarmonisedSplineLike,
+    # harmonise_splines,
     add_constant_to_spline,
-    GetHarmonisedSplineLike
 )
-from gradient_aware_harmonisation.convergence import (
-    SplineCosineConvergence
-)
-
 
 __version__ = importlib.metadata.version("gradient_aware_harmonisation")
 
@@ -85,13 +84,11 @@ def harmonise(  # noqa: PLR0913
 
     # match first-order derivatives
     diff_dspline = np.subtract(
-        target_dspline(harmonisation_time),
-        harmonisee_dspline(harmonisation_time)
+        target_dspline(harmonisation_time), harmonisee_dspline(harmonisation_time)
     )
 
     harmonised_first_derivative = add_constant_to_spline(
-        in_spline=harmonisee_dspline,
-        constant=diff_dspline
+        in_spline=harmonisee_dspline, constant=diff_dspline
     )
 
     # integrate to match zero-order derivative
@@ -102,12 +99,11 @@ def harmonise(  # noqa: PLR0913
     # match zero-order derivatives
     diff_spline = np.subtract(
         target_spline(harmonisation_time),
-        harmonised_spline_first_derivative_only(harmonisation_time)
+        harmonised_spline_first_derivative_only(harmonisation_time),
     )
 
     harmonised_spline_no_convergence = add_constant_to_spline(
-        in_spline=harmonised_spline_first_derivative_only,
-        constant=diff_spline
+        in_spline=harmonised_spline_first_derivative_only, constant=diff_spline
     )
 
     harmonised_spline = get_harmonised_spline(
@@ -120,4 +116,7 @@ def harmonise(  # noqa: PLR0913
     return harmonised_spline(harmonisee_timeseries.time_axis)
 
 
-__all__ = ["harmonise"]
+__all__ = [
+    "harmonise",
+    # "harmonise_splines",
+]

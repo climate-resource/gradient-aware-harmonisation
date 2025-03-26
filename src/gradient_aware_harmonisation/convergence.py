@@ -2,23 +2,19 @@
 Implements the decay/convergence methods
 """
 
-from attrs import define
-from typing import (
-    Any,
-    Optional,
-    Union,
-    overload
-)
+from typing import Any, Optional, Union, overload
+
 import numpy as np
 import numpy.typing as npt
+from attrs import define
 
-from gradient_aware_harmonisation.timeseries import Timeseries
 from gradient_aware_harmonisation.spline import (
+    NP_ARRAY_OF_FLOAT_OR_INT,
+    NP_FLOAT_OR_INT,
     Spline,
     SumOfSplines,
-    NP_FLOAT_OR_INT,
-    NP_ARRAY_OF_FLOAT_OR_INT
 )
+from gradient_aware_harmonisation.timeseries import Timeseries
 
 
 @define
@@ -66,7 +62,7 @@ class SplineCosineConvergence:
     def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
 
     def __call__(
-            self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
+        self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
     ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
         """
         Evaluate the spline at a given x-value
@@ -81,17 +77,6 @@ class SplineCosineConvergence:
         :
             Value of the spline at `x`
         """
-
-        conditions = [
-            (x <= self.initial_time, self.initial(x)),
-            (x >= self.final_time, self.final(x))
-            ]
-
-        #if x <= self.initial_time:
-        #    return self.initial(x)
-
-        #if x >= self.final_time:
-        #    return self.final(x)
 
         def decay(x):
             """
@@ -108,15 +93,32 @@ class SplineCosineConvergence:
                 interpolated spline values
 
             """
-            angle = np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
+            angle = (
+                np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
+            )
             gamma = 0.5 * (1 + np.cos(angle))
+
             return gamma * self.initial(x) + (1 - gamma) * self.final(x)
 
-        res = np.select([condition[0] for condition in conditions],
-                        [condition[1] for condition in conditions],
-                        default=decay(x))
+        if not isinstance(x, np.ndarray):
+            if x <= self.initial_time:
+                return self.initial(x)
 
-        res_timeseries = Timeseries(time_axis=x, values=res)
+            if x >= self.final_time:
+                return self.final(x)
+
+            return decay(x)
+
+        x_lte_final_time = np.where(x <= self.final_time)
+        x_gte_final_time = np.where(x >= self.final_time)
+        use_decay_values = ~np.logical_or(x_lte_final_time, x_gte_final_time)
+
+        breakpoint()
+        res_values = np.ones_like(x) * self.initial
+        res_values[x_gte_final_time] = self.final
+        res_values[use_decay_values] = decay(x[use_decay_values])
+
+        res_timeseries = Timeseries(time_axis=x, values=res_values)
 
         return res_timeseries
 
@@ -129,7 +131,6 @@ class SplineCosineConvergence:
         :
             Derivative of self
         """
-
         raise NotImplementedError
 
     def antiderivative(self) -> SumOfSplines:
@@ -145,11 +146,11 @@ class SplineCosineConvergence:
 
 
 def decay_weights(
-        timeseries_harmonisee: Timeseries,
-        harmonisation_time: Union[int, float],
-        convergence_time: Optional[Union[int, float]],
-        decay_method: str,
-        **kwargs: Any,
+    timeseries_harmonisee: Timeseries,
+    harmonisation_time: Union[int, float],
+    convergence_time: Optional[Union[int, float]],
+    decay_method: str,
+    **kwargs: Any,
 ) -> npt.NDArray[Any]:
     """
     Compute a sequence of decaying weights according to specified decay method.
@@ -193,7 +194,7 @@ def decay_weights(
         )
 
     if not np.isin(
-            np.float32(timeseries_harmonisee.time_axis), np.float32(harmonisation_time)
+        np.float32(timeseries_harmonisee.time_axis), np.float32(harmonisation_time)
     ).any():
         raise NotImplementedError(
             f"{harmonisation_time=} is not a value in "
@@ -215,7 +216,7 @@ def decay_weights(
                 np.logical_and(
                     timeseries_harmonisee.time_axis >= harmonisation_time,
                     timeseries_harmonisee.time_axis <= convergence_time,
-                    )
+                )
             )
         ]
 
@@ -240,10 +241,10 @@ def decay_weights(
 
 
 def get_cosine_decay_harmonised_spline(
-        harmonisation_time: Union[int, float],
-        convergence_time: Union[int, float],
-        harmonised_spline_no_convergence: Spline,
-        convergence_spline: Spline,
+    harmonisation_time: Union[int, float],
+    convergence_time: Union[int, float],
+    harmonised_spline_no_convergence: Spline,
+    convergence_spline: Spline,
 ) -> SplineCosineConvergence:
     """
     Generate the harmonised spline
@@ -313,7 +314,7 @@ def cosine_decay(decay_steps: int, initial_weight: float = 1.0) -> npt.NDArray[A
 
 
 def polynomial_decay(
-        decay_steps: int, pow: Union[float, int], initial_weight: float = 1.0
+    decay_steps: int, pow: Union[float, int], initial_weight: float = 1.0
 ) -> npt.NDArray[Any]:
     """
     Compute polynomial decay function
