@@ -120,15 +120,12 @@ def harmonise(  # noqa: PLR0913
     )
 
     # convert harmonised spline to timeseries
-    # TODO: passing an array to harmonised_spline leads to a very strange
-    #  behavior of the function. Currently it is required that the values
-    #  are fed in value-wise (therefore use of list comprehension)
-    indexer = harmonisee_timeseries.time_axis >= harmonisation_time
+    res_time_axis = harmonisee_timeseries.time_axis[
+        harmonisee_timeseries.time_axis >= harmonisation_time
+    ]
     res = Timeseries(
-        time_axis=harmonisee_timeseries.time_axis[indexer],
-        values=np.stack(
-            [harmonised_spline(i) for i in harmonisee_timeseries.time_axis[indexer]]
-        ),
+        time_axis=res_time_axis,
+        values=harmonised_spline(res_time_axis),
     )
 
     return res
