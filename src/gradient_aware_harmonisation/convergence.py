@@ -75,11 +75,16 @@ class CosineDecaySplineHelperDerivative:
             x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT,
         ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
             """Get cosine-decay derivative"""
+            # compute weight (here: gamma) according to a cosine-decay
             angle = (
                 np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
             )
             gamma_derivative = -0.5 * np.sin(angle)
 
+            # the weighted sum for computing the harmonised AND converged
+            # function has the form: "gamma * harmonised + (1-gamma) * convergence"
+            # depending on which product we want to compute (LHS or RHS of sum),
+            # we need gamma or 1-gamma, therefore we include the following condition
             if self.apply_to_convergence:
                 return -gamma_derivative
 
@@ -94,6 +99,8 @@ class CosineDecaySplineHelperDerivative:
 
             return decay_derivative(x)
 
+        # apply decay function only to values that lie between harmonisation
+        # time and convergence-time
         x_decay = np.logical_and(
             np.where(x > self.initial_time), np.where(x < self.final_time)
         )
@@ -193,6 +200,7 @@ class CosineDecaySplineHelper:
             Value of the spline at `x`
         """
 
+        # compute weight (here: gamma) according to a cosine-decay
         def decay(
             x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT,
         ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
@@ -202,6 +210,10 @@ class CosineDecaySplineHelper:
             )
             gamma = 0.5 * (1 + np.cos(angle))
 
+            # the weighted sum for computing the harmonised AND converged
+            # function has the form: "gamma * harmonised + (1-gamma) * convergence"
+            # depending on which product we want to compute (LHS or RHS of sum),
+            # we need gamma or 1-gamma, therefore we include the following condition
             if self.apply_to_convergence:
                 return 1 - gamma
             return gamma
@@ -219,6 +231,8 @@ class CosineDecaySplineHelper:
 
             return decay(x)
 
+        # apply decay function only to values that lie between harmonisation
+        # time and convergence-time
         x_gte_final_time = np.where(x >= self.final_time)
         x_decay = np.logical_and(x >= self.initial_time, x < self.final_time)
         gamma = np.ones_like(x, dtype=float)
@@ -291,6 +305,16 @@ def get_cosine_decay_harmonised_spline(
     :
         Harmonised spline
     """
+    # The harmonised spline is considered as the spline that match
+    # the target-spline at the harmonisation time (wrt to zero-and
+    # first order derivative). Then we use a decay function to let
+    # the harmonised spline converge to the convergenve-spline (by
+    # default: harmonisee). This decay function has the form of a
+    # a weighted sum:
+    # weight * harmonised_spline + (1-weight) * convergence_spline
+    # With weights decaying from 1 to 0 whereby the decay trajectory
+    # is determined by the corresponding approach (e.g. cosine,
+    # polynomial, etc.)
     return SumOfSplines(
         ProductOfSplines(
             CosineDecaySplineHelper(

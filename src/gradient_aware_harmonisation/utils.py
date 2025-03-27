@@ -66,6 +66,9 @@ class GetHarmonisedSplineLike(Protocol):
         """
 
 
+# this function is not used in the harmonise() function
+# However, it is a useful wrapper for getting the harmonised spline
+# without applying a further convergence method
 def harmonise_splines(  # noqa: PLR0913
     harmonisee: Spline,
     target: Spline,

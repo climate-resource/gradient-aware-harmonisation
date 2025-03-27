@@ -246,6 +246,8 @@ class ProductOfSplines:
         :
             Derivative of self
         """
+        # use the product rule in order to get the derivative of the product
+        # of two splines
         return SumOfSplines(
             ProductOfSplines(self.spline_one, self.spline_two.derivative()),
             ProductOfSplines(self.spline_one.derivative(), self.spline_two),
@@ -260,4 +262,8 @@ class ProductOfSplines:
         :
             Anti-derivative of self
         """
+        # computation of the antiderivative of a product of splines is not
+        # straightforward
+        # However, as we don't need the antiderivative in our current workflow
+        # we leave it for the time being as "not implemented"
         raise NotImplementedError
