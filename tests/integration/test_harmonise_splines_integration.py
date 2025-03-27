@@ -17,7 +17,8 @@ In this module, we need to test a few things:
 import numpy as np
 import pytest
 
-from gradient_aware_harmonisation.utils import Timeseries, harmonise_splines
+from gradient_aware_harmonisation import harmonise_splines
+from gradient_aware_harmonisation.timeseries import Timeseries
 
 scipy = pytest.importorskip("scipy")
 
@@ -41,7 +42,7 @@ def check_continuity(  # noqa: PLR0913
         err_msg="Difference in zero-order values at harmonisation time",
     )
 
-    # First-derivate at harmonisation time
+    # First-derivative at harmonisation time
     np.testing.assert_allclose(
         harmonised.derivative()(harmonisation_time),
         target.derivative()(harmonisation_time),
@@ -59,7 +60,7 @@ def check_continuity(  # noqa: PLR0913
         err_msg="Difference in zero-order values at convergence time",
     )
 
-    # First-derivate at convergence time
+    # First-derivative at convergence time
     np.testing.assert_allclose(
         harmonised.derivative()(convergence_time),
         convergence_spline.derivative()(convergence_time),

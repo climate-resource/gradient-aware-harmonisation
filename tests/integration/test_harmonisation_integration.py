@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from gradient_aware_harmonisation import harmonise
-from gradient_aware_harmonisation.utils import Timeseries
+from gradient_aware_harmonisation.timeseries import Timeseries
 
 
 # TODO: add harmonisation_time halfway between points in time axis
@@ -38,7 +38,7 @@ def test_already_harmonised_remains_unchanged(harmonisation_time, convergence_ti
         harmonisee_timeseries=harmonisee,
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
-        convergence_timeseries=harmonisee
+        convergence_timeseries=harmonisee,
     )
 
     # We expect to get out what we put in as it's already harmonised
