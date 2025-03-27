@@ -97,68 +97,6 @@ plotting(
 )
 
 # %% [markdown]
-# ### Change weight `decay_method`
-# #### Inspect different decay variants
-
-# %%
-# cos_decay = cosine_decay(decay_steps=50)
-# poly_decay = lambda pow: polynomial_decay(decay_steps=50, pow=pow)
-
-# plt.figure(figsize=(4, 3))
-# plt.plot(cos_decay, label="cosine")
-# for p in [1.0, 2.0, 3.0]:
-#    plt.plot(poly_decay(p), label=f"polynomial, pow={p}")
-# plt.legend(handlelength=0.3, fontsize="small", frameon=False)
-# plt.title("Different weight decay methods")
-# plt.show()
-
-# %% [markdown]
-# #### Inspect convergence results using different decay methods
-
-
-# %%
-# def sensitivity_weight_decay(decay_method, **kwargs):
-#    harmonised_timeseries = harmonise(
-#        target_timeseries=target_timeseries,
-#        harmonisee_timeseries=harmonisee_timeseries,
-#        harmonisation_time=harmonisation_time,
-#        convergence_time=None
-#    )
-
-#    plotting(
-#        harmonisee_timeseries,
-#        target_timeseries,
-#        harmonised_timeseries,
-#        harmonisation_time,
-#        convergence_time=None,
-#    )
-
-
-# %% [markdown]
-# ##### Cosine decay
-
-# %%
-# sensitivity_weight_decay(decay_method="cosine")
-
-# %% [markdown]
-# ##### Polynomial decay, power = 1. (i.e., linear decay)
-
-# %%
-# sensitivity_weight_decay(decay_method="polynomial", pow=1.0)
-
-# %% [markdown]
-# ##### Polynomial decay, power = 2.
-
-# %%
-# sensitivity_weight_decay(decay_method="polynomial", pow=2.0)
-
-# %% [markdown]
-# ##### Polynomial decay, power = 3.
-
-# %%
-# sensitivity_weight_decay(decay_method="polynomial", pow=3.0)
-
-# %% [markdown]
 # ## Toy Example 2: Use timeseries data
 # ### Read data
 
