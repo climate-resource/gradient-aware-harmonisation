@@ -26,16 +26,11 @@
 
 # %%
 # Imports
-import matplotlib.pyplot as plt
 import numpy as np
 
 from gradient_aware_harmonisation import harmonise
 from gradient_aware_harmonisation.plotting import plotting
-from gradient_aware_harmonisation.utils import (
-    Timeseries,
-    cosine_decay,
-    polynomial_decay,
-)
+from gradient_aware_harmonisation.timeseries import Timeseries
 
 # %% [markdown]
 # ## Toy Example 1: Artificial data
@@ -66,7 +61,6 @@ harmonised_timeseries = harmonise(
     harmonisee_timeseries=harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
     convergence_time=None,
-    decay_method="cosine",
 )
 
 # %% [markdown]
@@ -92,7 +86,6 @@ harmonised_timeseries = harmonise(
     harmonisee_timeseries=harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
     convergence_time=convergence_time,
-    decay_method="cosine",
 )
 
 plotting(
@@ -108,64 +101,62 @@ plotting(
 # #### Inspect different decay variants
 
 # %%
-cos_decay = cosine_decay(decay_steps=50)
-poly_decay = lambda pow: polynomial_decay(decay_steps=50, pow=pow)  # noqa: E731
+# cos_decay = cosine_decay(decay_steps=50)
+# poly_decay = lambda pow: polynomial_decay(decay_steps=50, pow=pow)
 
-plt.figure(figsize=(4, 3))
-plt.plot(cos_decay, label="cosine")
-for p in [1.0, 2.0, 3.0]:
-    plt.plot(poly_decay(p), label=f"polynomial, pow={p}")
-plt.legend(handlelength=0.3, fontsize="small", frameon=False)
-plt.title("Different weight decay methods")
-plt.show()
+# plt.figure(figsize=(4, 3))
+# plt.plot(cos_decay, label="cosine")
+# for p in [1.0, 2.0, 3.0]:
+#    plt.plot(poly_decay(p), label=f"polynomial, pow={p}")
+# plt.legend(handlelength=0.3, fontsize="small", frameon=False)
+# plt.title("Different weight decay methods")
+# plt.show()
 
 # %% [markdown]
 # #### Inspect convergence results using different decay methods
 
 
 # %%
-def sensitivity_weight_decay(decay_method, **kwargs):  # noqa: D103
-    harmonised_timeseries = harmonise(
-        target_timeseries=target_timeseries,
-        harmonisee_timeseries=harmonisee_timeseries,
-        harmonisation_time=harmonisation_time,
-        convergence_time=None,
-        decay_method=decay_method,
-        **kwargs,
-    )
+# def sensitivity_weight_decay(decay_method, **kwargs):
+#    harmonised_timeseries = harmonise(
+#        target_timeseries=target_timeseries,
+#        harmonisee_timeseries=harmonisee_timeseries,
+#        harmonisation_time=harmonisation_time,
+#        convergence_time=None
+#    )
 
-    plotting(
-        harmonisee_timeseries,
-        target_timeseries,
-        harmonised_timeseries,
-        harmonisation_time,
-        convergence_time=None,
-    )
+#    plotting(
+#        harmonisee_timeseries,
+#        target_timeseries,
+#        harmonised_timeseries,
+#        harmonisation_time,
+#        convergence_time=None,
+#    )
 
 
 # %% [markdown]
 # ##### Cosine decay
 
 # %%
-sensitivity_weight_decay(decay_method="cosine")
+# sensitivity_weight_decay(decay_method="cosine")
 
 # %% [markdown]
 # ##### Polynomial decay, power = 1. (i.e., linear decay)
 
 # %%
-sensitivity_weight_decay(decay_method="polynomial", pow=1.0)
+# sensitivity_weight_decay(decay_method="polynomial", pow=1.0)
 
 # %% [markdown]
 # ##### Polynomial decay, power = 2.
 
 # %%
-sensitivity_weight_decay(decay_method="polynomial", pow=2.0)
+# sensitivity_weight_decay(decay_method="polynomial", pow=2.0)
 
 # %% [markdown]
 # ##### Polynomial decay, power = 3.
 
 # %%
-sensitivity_weight_decay(decay_method="polynomial", pow=3.0)
+# sensitivity_weight_decay(decay_method="polynomial", pow=3.0)
 
 # %% [markdown]
 # ## Toy Example 2: Use timeseries data
@@ -192,27 +183,18 @@ harmonisee_timeseries = Timeseries(
 # %%
 # harmonise timeseries at t0
 harmonised_timeseries = harmonise(
-    target_timeseries,
-    harmonisee_timeseries,
+    target_timeseries=target_timeseries,
+    harmonisee_timeseries=harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
     convergence_time=None,
 )
 
 # harmonise timeseries at t0 and assure convergence at t1 (converge_t)
 harmonised_timeseries2 = harmonise(
-    target_timeseries,
-    harmonisee_timeseries,
+    target_timeseries=target_timeseries,
+    harmonisee_timeseries=harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
     convergence_time=convergence_time,
-)
-
-# harmonise timeseries at t0 and assure convergence at t1 (converge_t)
-harmonised_timeseries3 = harmonise(
-    target_timeseries,
-    harmonisee_timeseries,
-    harmonisation_time=harmonisation_time,
-    convergence_time=convergence_time,
-    interpolation_target="bias_corrected",
 )
 
 # %% [markdown]
@@ -231,14 +213,6 @@ plotting(
     harmonisee_timeseries,
     target_timeseries,
     harmonised_timeseries2,
-    harmonisation_time,
-    convergence_time,
-)
-
-plotting(
-    harmonisee_timeseries,
-    target_timeseries,
-    harmonised_timeseries3,
     harmonisation_time,
     convergence_time,
 )

@@ -204,11 +204,10 @@ class CosineDecaySplineHelper:
 
             if self.apply_to_convergence:
                 return 1 - gamma
-
             return gamma
 
         if not isinstance(x, np.ndarray):
-            if x <= self.initial_time:
+            if x < self.initial_time:
                 if self.apply_to_convergence:
                     return 0.0
                 return 1.0
@@ -221,8 +220,8 @@ class CosineDecaySplineHelper:
             return decay(x)
 
         x_gte_final_time = np.where(x >= self.final_time)
-        x_decay = np.logical_and(x > self.initial_time, x < self.final_time)
-        gamma = np.ones_like(x)
+        x_decay = np.logical_and(x >= self.initial_time, x < self.final_time)
+        gamma = np.ones_like(x, dtype=float)
         gamma[x_gte_final_time] = 0.0
         gamma[x_decay] = decay(x[x_decay])
 
@@ -295,7 +294,9 @@ def get_cosine_decay_harmonised_spline(
     return SumOfSplines(
         ProductOfSplines(
             CosineDecaySplineHelper(
-                initial_time=harmonisation_time, final_time=convergence_time
+                initial_time=harmonisation_time,
+                final_time=convergence_time,
+                apply_to_convergence=False,
             ),
             harmonised_spline_no_convergence,
         ),

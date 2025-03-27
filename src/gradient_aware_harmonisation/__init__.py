@@ -22,8 +22,8 @@ def harmonise(  # noqa: PLR0913
     harmonisee_timeseries: Timeseries,
     target_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
-    convergence_timeseries: Timeseries | None = None,
-    convergence_time: Optional[Union[int, float]] | None = None,
+    convergence_timeseries: Optional[Timeseries] = None,
+    convergence_time: Optional[Union[int, float]] = None,
     get_harmonised_spline: GetHarmonisedSplineLike = (
         get_cosine_decay_harmonised_spline
     ),
@@ -120,10 +120,13 @@ def harmonise(  # noqa: PLR0913
     )
 
     # convert harmonised spline to timeseries
-    res_indexer = np.where(harmonisee_timeseries.time_axis >= harmonisation_time)
+    # TODO: passing an array to harmonised_spline leads to very strange values
+    indexer = harmonisee_timeseries.time_axis >= harmonisation_time
     res = Timeseries(
-        time_axis=harmonisee_timeseries.time_axis[res_indexer],
-        values=harmonised_spline(harmonisee_timeseries.time_axis[res_indexer]),
+        time_axis=harmonisee_timeseries.time_axis[indexer],
+        values=np.stack(
+            [harmonised_spline(i) for i in harmonisee_timeseries.time_axis[indexer]]
+        ),
     )
 
     return res
