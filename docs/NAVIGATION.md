@@ -3,6 +3,7 @@ Navigation specification
 
 See https://oprypin.github.io/mkdocs-literate-nav/
 -->
+
 - [Home](index.md)
 - [Installation](installation.md)
 - [How-to guides](how-to-guides/index.md)
