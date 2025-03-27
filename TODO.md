@@ -4,12 +4,12 @@
 - Add any other tests of harmonise_splines we think are useful
 
 - Think about which other parts of the API we still need, e.g.
-    - can we remove `interpolate_harmoniser`
-    - we can definitely remove `ConvergenceMethod`
+    - can we remove `interpolate_harmoniser` (check)
+    - we can definitely remove `ConvergenceMethod` (check)
 
 - Add a `to_spline` method to the `Timeseries` class (including tests)
     - this can be very thin (it's basically syntactic sugar),
-      all it needs to do is call `timeseries_to_spline` really
+      all it needs to do is call `timeseries_to_spline` really (check)
 
 - fix up the tests in `test_harmonisation_integration`
 - any other general clean up

@@ -17,7 +17,8 @@ In this module, we need to test a few things:
 import numpy as np
 import pytest
 
-from gradient_aware_harmonisation.utils import Timeseries, harmonise_splines
+from gradient_aware_harmonisation import harmonise_splines
+from gradient_aware_harmonisation.timeseries import Timeseries
 
 scipy = pytest.importorskip("scipy")
 
@@ -41,22 +42,9 @@ def check_continuity(  # noqa: PLR0913
         err_msg="Difference in zero-order values at harmonisation time",
     )
 
-    # TODO: figure out whether we want to go down the rabbit hole
-    # of derivatives of our outputs
-    # # First-derivate at harmonisation time
-    # np.testing.assert_allclose(
-    #     harmonised.derivative()(harmonisation_time),
-    #     target.derivative()(harmonisation_time),
-    #     rtol=rtol,
-    #     atol=atol,
-    #     err_msg="Difference in first-derivative at harmonisation time",
-    # )
-    delta = 1e-6
-    harmonised_deriv_approx = (
-        harmonised(harmonisation_time + delta) - harmonised(harmonisation_time)
-    ) / delta
+    # First-derivative at harmonisation time
     np.testing.assert_allclose(
-        harmonised_deriv_approx,
+        harmonised.derivative()(harmonisation_time),
         target.derivative()(harmonisation_time),
         rtol=rtol,
         atol=atol,
@@ -72,26 +60,13 @@ def check_continuity(  # noqa: PLR0913
         err_msg="Difference in zero-order values at convergence time",
     )
 
-    # # TODO: figure out whether we want to go down the rabbit hole
-    # # of derivatives of our outputs
-    # # First-derivate at convergence time
-    # np.testing.assert_allclose(
-    #     harmonised.derivative()(convergence_time),
-    #     convergence_spline.derivative()(convergence_time),
-    #     rtol=rtol,
-    #     atol=atol,
-    #     err_msg="Difference in first-derivative at convergence time",
-    # )
-    delta = 1e-6
-    harmonised_deriv_approx = (
-        harmonised(convergence_time + delta) - harmonised(convergence_time)
-    ) / delta
+    # First-derivative at convergence time
     np.testing.assert_allclose(
-        harmonised_deriv_approx,
+        harmonised.derivative()(convergence_time),
         convergence_spline.derivative()(convergence_time),
         rtol=rtol,
         atol=atol,
-        err_msg="Difference in first-derivative at harmonisation time",
+        err_msg="Difference in first-derivative at convergence time",
     )
 
 
@@ -108,7 +83,7 @@ def test_target_and_harmonisee_equal(convergence_time, harmonisation_time):
         harmonisee=target,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=target,
+        converge_to=target,
         convergence_time=convergence_time,
         # TODO: think about convergence method
     )
@@ -147,7 +122,7 @@ def test_target_and_harmonisee_differ(convergence_time, harmonisation_time):
         harmonisee=harmonisee,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=harmonisee,
+        converge_to=target,
         convergence_time=convergence_time,
         # TODO: think about convergence method
     )
@@ -161,7 +136,7 @@ def test_target_and_harmonisee_differ(convergence_time, harmonisation_time):
         harmonised=harmonised_spline,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=harmonisee,
+        convergence_spline=target,
         convergence_time=convergence_time_exp,
         # Slightly higher while we think about our numerical integration issue
         rtol=5e-3,
@@ -189,7 +164,7 @@ def test_more_realistic(convergence_time, harmonisation_time):
         harmonisee=harmonisee,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=harmonisee,
+        converge_to=target,
         convergence_time=convergence_time,
         # TODO: think about convergence method
     )
@@ -203,7 +178,7 @@ def test_more_realistic(convergence_time, harmonisation_time):
         harmonised=harmonised_spline,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=harmonisee,
+        convergence_spline=target,
         convergence_time=convergence_time_exp,
         # Slightly higher while we think about our numerical integration issue
         rtol=1e-2,
