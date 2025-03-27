@@ -99,8 +99,6 @@ def test_target_and_harmonisee_equal(convergence_time, harmonisation_time):
         harmonisation_time=harmonisation_time,
         convergence_spline=target,
         convergence_time=convergence_time_exp,
-        # Slightly higher while we think about our numerical integration issue
-        rtol=1e-6,
     )
 
 
@@ -122,7 +120,7 @@ def test_target_and_harmonisee_differ(convergence_time, harmonisation_time):
         harmonisee=harmonisee,
         target=target,
         harmonisation_time=harmonisation_time,
-        converge_to=target,
+        converge_to=harmonisee,
         convergence_time=convergence_time,
         # TODO: think about convergence method
     )
@@ -136,10 +134,8 @@ def test_target_and_harmonisee_differ(convergence_time, harmonisation_time):
         harmonised=harmonised_spline,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=target,
+        convergence_spline=harmonisee,
         convergence_time=convergence_time_exp,
-        # Slightly higher while we think about our numerical integration issue
-        rtol=5e-3,
     )
 
 
@@ -164,7 +160,7 @@ def test_more_realistic(convergence_time, harmonisation_time):
         harmonisee=harmonisee,
         target=target,
         harmonisation_time=harmonisation_time,
-        converge_to=target,
+        converge_to=harmonisee,
         convergence_time=convergence_time,
         # TODO: think about convergence method
     )
@@ -178,10 +174,8 @@ def test_more_realistic(convergence_time, harmonisation_time):
         harmonised=harmonised_spline,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=target,
+        convergence_spline=harmonisee,
         convergence_time=convergence_time_exp,
-        # Slightly higher while we think about our numerical integration issue
-        rtol=1e-2,
     )
 
 
