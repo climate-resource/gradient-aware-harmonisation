@@ -92,6 +92,8 @@ dev = [
     "toml==0.10.2",
     "typing-extensions==4.12.2",
     "virtualenv==20.28.1",
+    "tomli>=2.2.1",
+    "typer>=0.15.2",
 ]
 docs = [
     # Key dependencies

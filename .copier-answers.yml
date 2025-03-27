@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: v0.11.1
+_commit: v0.12.3
 _src_path: gl:openscm/copier-core-python-repository
 conda_release: true
 email: florence.bockting@climate-resource.com
