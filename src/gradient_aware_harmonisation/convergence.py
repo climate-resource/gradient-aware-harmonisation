@@ -214,7 +214,7 @@ class CosineDecaySplineHelper:
 
         if not isinstance(x, np.ndarray):
             if x <= self.initial_time:
-                gamma = 1.0
+                gamma: float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT = 1.0
             elif x >= self.final_time:
                 gamma = 0.0
             else:
