@@ -278,7 +278,7 @@ def get_cosine_decay_harmonised_spline(
     convergence_spline: Spline,
 ) -> SumOfSplines:
     """
-    Generate the harmonised spline
+    Generate the harmonised spline based on a cosine-decay
 
     Parameters
     ----------
