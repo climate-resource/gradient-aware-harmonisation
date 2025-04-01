@@ -62,7 +62,7 @@ def harmonise(  # noqa: PLR0913
         If not supplied, we converge to convergence timeseries
         at the last time point in harmonisee_timeseries.
 
-    convergence_method
+    get_harmonised_spline
         The method to use to converge back to the convergence timeseries.
 
     Returns
