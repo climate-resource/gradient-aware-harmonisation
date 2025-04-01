@@ -87,7 +87,7 @@ def harmonise(  # noqa: PLR0913
         harmonisee=harmonisee_spline,
         target=target_spline,
         harmonisation_time=harmonisation_time,
-        convergence_to=convergence_spline,
+        converge_to=convergence_spline,
         convergence_time=convergence_time,
         get_harmonised_spline=get_harmonised_spline,
     )
