@@ -5,7 +5,7 @@ Helper functions
 from typing import Optional, Union
 
 from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
-from gradient_aware_harmonisation.utils import Timeseries
+from gradient_aware_harmonisation.timeseries import Timeseries
 
 
 def plotting(
