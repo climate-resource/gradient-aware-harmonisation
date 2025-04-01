@@ -11,11 +11,11 @@
     - this can be very thin (it's basically syntactic sugar),
       all it needs to do is call `timeseries_to_spline` really (check)
 
-- fix up the tests in `test_harmonisation_integration`
+- fix up the tests in `test_harmonisation_integration` (check)
 - any other general clean up
-    - e.g. moving functions into their own modules
+    - e.g. moving functions into their own modules (check)
 
-- docs page on harmonisation with splines directly (start from `scratch.py`)
+- docs page on harmonisation with splines directly (start from `scratch.py`) (check)
 
 Hoped result:
 
