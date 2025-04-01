@@ -308,13 +308,11 @@ def get_cosine_decay_harmonised_spline(
     # The harmonised spline is considered as the spline that match
     # the target-spline at the harmonisation time (wrt to zero-and
     # first order derivative). Then we use a decay function to let
-    # the harmonised spline converge to the convergenve-spline (by
-    # default: harmonisee). This decay function has the form of a
-    # a weighted sum:
+    # the harmonised spline converge to the convergence-spline.
+    # This decay function has the form of a weighted sum:
     # weight * harmonised_spline + (1-weight) * convergence_spline
     # With weights decaying from 1 to 0 whereby the decay trajectory
-    # is determined by the corresponding approach (e.g. cosine,
-    # polynomial, etc.)
+    # is determined by the cosine decay.
     return SumOfSplines(
         ProductOfSplines(
             CosineDecaySplineHelper(
