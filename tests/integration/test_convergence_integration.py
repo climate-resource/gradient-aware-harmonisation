@@ -169,7 +169,7 @@ def test_get_cosine_decay_harmonised_spline():
     test weighted sum of two splines
 
     gamma * spline1  + (1-gamma) * spline2 with
-    numerator = (pi * x - harmonisation_time)
+    numerator = (pi * (x - harmonisation_time))
     denominator = (convergence_time - harmonisation_time)
     gamma = 0.5 * (1 + cos(numerator/denominator)
 
