@@ -94,8 +94,8 @@ def test_cosine_decay_spline_derivative():
     """
     test derivative of gamma for different time values (both single value and array)
 
-    + gamma = 0 harmonisation_time > gamma > convergence_time
-    + gamma = cosine_decay_derivative(x) for harm_time < gamma < conv_time
+    + gamma = 0 harmonisation_time > time > convergence_time
+    + gamma = cosine_decay_derivative(x) for harm_time < time < conv_time
 
     """
     spline = CosineDecaySplineHelper(
