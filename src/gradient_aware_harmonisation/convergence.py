@@ -251,11 +251,7 @@ class CosineDecaySplineHelperDerivative:
         :
             Derivative of self
         """
-        return CosineDecaySplineHelperDerivative(
-            initial_time=self.initial_time,
-            final_time=self.final_time,
-            apply_to_convergence=self.apply_to_convergence,
-        )
+        raise NotImplementedError
 
     def antiderivative(self) -> CosineDecaySplineHelperDerivative:
         """
