@@ -16,9 +16,9 @@ def test_cosine_decay_spline():
     """
     test gamma for different time values (both single value and array)
 
-    + gamma = 1 for gamma <= harmonisation_time
-    + gamma = 0 for gamma >= convergence_time
-    + gamma = cosine_decay(x) for harmonisation_time < gamma < convergence_time
+    + gamma = 1 for time <= harmonisation_time
+    + gamma = 0 for time >= convergence_time
+    + gamma = cosine_decay(x) for harmonisation_time < x < convergence_time
     """
     spline = CosineDecaySplineHelper(
         initial_time=2.0,
