@@ -10,8 +10,6 @@ import numpy as np
 import numpy.typing as npt
 from attrs import define
 
-from gradient_aware_harmonisation.exceptions import MissingOptionalDependencyError
-
 if TYPE_CHECKING:
     import scipy.interpolate
     from typing_extensions import TypeAlias
@@ -194,41 +192,78 @@ class SumOfSplines:
         )
 
 
-def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
+@define
+class ProductOfSplines:
     """
-    Add a constant value to a spline
-
-    Parameters
-    ----------
-    in_spline
-        Input spline
-
-    constant
-        Constant to add
-
-    Returns
-    -------
-    :
-        Spline plus the given constant
+    Product of two splines
     """
-    try:
-        import scipy.interpolate
-    except ImportError as exc:
-        raise MissingOptionalDependencyError(
-            "add_constant_to_spline", requirement="scipy"
-        ) from exc
 
-    return SumOfSplines(
-        spline_one=in_spline,
-        spline_two=SplineScipy(
-            scipy.interpolate.PPoly(
-                c=[[constant]],
-                # # TODO: Problem: Currently domain is defined for SumOfSplines
-                # #  and SplineScipy should be specified only once
-                # #  preferably in SplineScipy
-                # x=in_spline.domain,
-                # TODO: better solution for domain handling
-                x=[-1e8, 1e8],
-            )
-        ),
-    )
+    spline_one: Spline
+    """First spline"""
+
+    spline_two: Spline
+    """Second spline"""
+
+    # domain: ClassVar[list[float, float]] = [
+    #     np.finfo(np.float64).tiny,
+    #     np.finfo(np.float64).max,
+    # ]
+    # """Domain of spline"""
+
+    @overload
+    def __call__(self, x: int | float) -> int | float: ...
+
+    @overload
+    def __call__(self, x: NP_FLOAT_OR_INT) -> NP_FLOAT_OR_INT: ...
+
+    @overload
+    def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
+
+    def __call__(
+        self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
+    ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
+        """
+        Evaluate the spline at a given x-value
+
+        Parameters
+        ----------
+        x
+            x-value
+
+        Returns
+        -------
+        :
+            Value of the spline at `x`
+        """
+        return self.spline_one(x) * self.spline_two(x)
+
+    def derivative(self) -> SumOfSplines:
+        """
+        Calculate the derivative of self
+
+        Returns
+        -------
+        :
+            Derivative of self
+        """
+        # use the product rule in order to get the derivative of the product
+        # of two splines
+        return SumOfSplines(
+            ProductOfSplines(self.spline_one, self.spline_two.derivative()),
+            ProductOfSplines(self.spline_one.derivative(), self.spline_two),
+        )
+
+    def antiderivative(self) -> SumOfSplines:
+        """
+        Calculate the anti-derivative/integral of self
+
+        Returns
+        -------
+        :
+            Anti-derivative of self
+        """
+        # computation of the antiderivative of a product of splines is not
+        # straightforward
+        # However, as we don't need the antiderivative in our current workflow
+        # we leave it for the time being as "not implemented"
+        raise NotImplementedError

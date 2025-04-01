@@ -8,9 +8,10 @@ import numpy as np
 import pytest
 
 from gradient_aware_harmonisation.spline import (
+    ProductOfSplines,
     SplineScipy,
-    add_constant_to_spline,
 )
+from gradient_aware_harmonisation.utils import add_constant_to_spline
 
 scipy = pytest.importorskip("scipy")
 
@@ -53,3 +54,44 @@ def test_add_constant_to_spline_derivative(const):
 @pytest.mark.parametrize("const", (-1.3, 0.0, 2.5))
 def test_add_constant_to_spline_antiderivative(const):
     pass
+
+
+def test_product_of_splines():
+    x_min = -10
+    x_max = 10
+    x_fine = np.linspace(x_min, x_max, 101)
+
+    x_2 = SplineScipy(
+        scipy.interpolate.PPoly(
+            x=[x_min, x_max],
+            c=[[1], [0], [0]],  # y=x^2
+        )
+    )
+    x = SplineScipy(
+        scipy.interpolate.PPoly(
+            x=[x_min, x_max],
+            c=[[1], [0]],  # y=x
+        )
+    )
+
+    x_3 = SplineScipy(
+        scipy.interpolate.PPoly(
+            x=[x_min, x_max],
+            c=[[1], [0], [0], [0]],  # y=x^3
+        )
+    )
+
+    product = ProductOfSplines(x_2, x)
+
+    # Make sure that starting product actually works
+    np.testing.assert_equal(x_3(x_fine), product(x_fine))
+
+    # Check derivative
+    np.testing.assert_equal(x_3.derivative()(x_fine), product.derivative()(x_fine))
+
+    # Doing antiderivative well requires basically reimplementing sympy,
+    # hence not implemented.
+    with pytest.raises(NotImplementedError):
+        np.testing.assert_equal(
+            x_3.antiderivative()(x_fine), product.antiderivative()(x_fine)
+        )
