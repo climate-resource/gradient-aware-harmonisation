@@ -60,7 +60,7 @@ def harmonise(  # noqa: PLR0913
         at the last time point in harmonisee_timeseries.
 
     get_harmonised_spline
-        The method to use to converge back to the convergence timeseries.
+        Function used to get the harmonised spline from a gradient-preserving spline and the timeseries to converge to
 
     Returns
     -------
