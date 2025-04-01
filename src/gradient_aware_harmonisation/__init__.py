@@ -5,9 +5,10 @@ Gradient-aware harmonisation of timeseries
 import importlib.metadata
 from typing import Optional, Union
 
+from gradient_aware_harmonisation.convergence import get_cosine_decay_harmonised_spline
 from gradient_aware_harmonisation.timeseries import Timeseries
 from gradient_aware_harmonisation.utils import (
-    ConvergenceMethod,
+    GetHarmonisedSplineLike,
     harmonise_splines,
 )
 
@@ -18,10 +19,11 @@ def harmonise(  # noqa: PLR0913
     harmonisee_timeseries: Timeseries,
     target_timeseries: Timeseries,
     harmonisation_time: Union[int, float],
-    convergence_timeseries: Timeseries | None = None,
-    convergence_time: Optional[Union[int, float]] | None = None,
-    convergence_method: ConvergenceMethod = ConvergenceMethod.COSINE,
-    # convergence_function: Callable[[Spline, Spline], Spline] | None = None,
+    convergence_timeseries: Optional[Timeseries] = None,
+    convergence_time: Optional[Union[int, float]] = None,
+    get_harmonised_spline: GetHarmonisedSplineLike = (
+        get_cosine_decay_harmonised_spline
+    ),
 ) -> Timeseries:
     """
     Harmonise two timeseries
@@ -57,31 +59,51 @@ def harmonise(  # noqa: PLR0913
         If not supplied, we converge to convergence timeseries
         at the last time point in harmonisee_timeseries.
 
-    convergence_method
-        The method to use to converge back to the convergence timeseries.
+    get_harmonised_spline
+        Function used to get the harmonised spline from a gradient-
+        preserving spline and the timeseries to converge to
 
     Returns
     -------
     harmonised_timeseries :
         Harmonised timeseries
     """
+    # use maximum time if no convergence time is provided
     if convergence_time is None:
         convergence_time = harmonisee_timeseries.time_axis.max()
 
+    # use harmonisee as convergence target if nothing else is provided
+    if convergence_timeseries is None:
+        convergence_timeseries = harmonisee_timeseries
+
+    # convert timeseries to splines
+    target_spline = target_timeseries.to_spline()
+    harmonisee_spline = harmonisee_timeseries.to_spline()
+    convergence_spline = convergence_timeseries.to_spline()
+
+    # get harmonised spline
     harmonised_spline = harmonise_splines(
-        harmonisee=harmonisee_timeseries.to_spline(),
-        target=target_timeseries.to_spline(),
+        harmonisee=harmonisee_spline,
+        target=target_spline,
         harmonisation_time=harmonisation_time,
-        convergence_spline=convergence_timeseries.to_spline(),
+        converge_to=convergence_spline,
         convergence_time=convergence_time,
-        convergence_method=convergence_method,
+        get_harmonised_spline=get_harmonised_spline,
     )
 
-    harmonised_timeseries = harmonised_spline.to_timeseries(
-        time_axis=harmonisee_timeseries.time_axis
+    # convert harmonised spline to timeseries
+    res_time_axis = harmonisee_timeseries.time_axis[
+        harmonisee_timeseries.time_axis >= harmonisation_time
+    ]
+    res = Timeseries(
+        time_axis=res_time_axis,
+        values=harmonised_spline(res_time_axis),
     )
 
-    return harmonised_timeseries
+    return res
 
 
-__all__ = ["harmonise"]
+__all__ = [
+    "harmonise",
+    "harmonise_splines",
+]
