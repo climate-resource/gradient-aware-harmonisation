@@ -61,7 +61,7 @@ class CosineDecaySplineHelper:
     @overload
     def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
 
-    def __call__(  # noqa: PLR0911
+    def __call__(
         self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
     ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
         """
@@ -78,47 +78,47 @@ class CosineDecaySplineHelper:
             Value of the spline at `x`
         """
 
-        # compute weight (here: gamma) according to a cosine-decay
-        def decay(
+        def calc_gamma(
             x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT,
         ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
-            """Get cosine-decay"""
-            angle: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT = np.divide(
-                np.pi * (x - self.initial_time), (self.final_time - self.initial_time)
+            """Get cosine-decay derivative"""
+            # compute weight (here: gamma) according to a cosine-decay
+            angle = (
+                np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
             )
-            gamma = 0.5 * (1 + np.cos(angle))
 
-            # the weighted sum for computing the harmonised AND converged
-            # function has the form: "gamma * harmonised + (1-gamma) * convergence"
-            # depending on which product we want to compute (LHS or RHS of sum),
-            # we need gamma or 1-gamma, therefore we include the following condition
-            if self.apply_to_convergence:
-                return 1 - gamma
-            return gamma
+            gamma_decaying = 0.5 * (1 + np.cos(angle))
+
+            return gamma_decaying
 
         if not isinstance(x, np.ndarray):
-            if x < self.initial_time:
-                if self.apply_to_convergence:
-                    return 0.0
-                return 1.0
+            if x <= self.initial_time:
+                gamma: float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT = 1.0
+            elif x >= self.final_time:
+                gamma = 0.0
+            else:
+                gamma = calc_gamma(x)
 
-            if x >= self.final_time:
-                if self.apply_to_convergence:
-                    return 1.0
-                return 0.0
+            # The weighted sum for computing the harmonised AND converged
+            # function has the form: "gamma * harmonised + (1-gamma) * convergence".
+            # Depending on which product we want to compute (LHS or RHS of sum),
+            # we need gamma or 1-gamma, therefore we include the following condition
+            # in all our return statements.
+            if self.apply_to_convergence:
+                return 1.0 - gamma
 
-            return decay(x)
+            return gamma
 
         # apply decay function only to values that lie between harmonisation
         # time and convergence-time
         x_gte_final_time = np.where(x >= self.final_time)
         x_decay = np.logical_and(x >= self.initial_time, x < self.final_time)
-        gamma = np.ones_like(x, dtype=float)
+        gamma = np.ones_like(x, dtype=np.floating)
         gamma[x_gte_final_time] = 0.0
-        gamma[x_decay] = decay(x[x_decay])
+        gamma[x_decay] = calc_gamma(x[x_decay])
 
         if self.apply_to_convergence:
-            return 1 - gamma
+            return 1.0 - gamma
 
         return gamma
 
@@ -130,6 +130,7 @@ class CosineDecaySplineHelper:
         -------
         :
             Derivative of self
+
         """
         return CosineDecaySplineHelperDerivative(
             initial_time=self.initial_time,
@@ -202,43 +203,44 @@ class CosineDecaySplineHelperDerivative:
             Value of the spline at `x`
         """
 
-        def decay_derivative(
+        # compute weight (here: gamma) according to a cosine-decay
+        def calc_gamma_rising_derivative(
             x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT,
         ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
             """Get cosine-decay derivative"""
-            # compute weight (here: gamma) according to a cosine-decay
+            # compute derivative of gamma according to a cosine-decay
             angle = (
                 np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
             )
-            gamma_derivative = -0.5 * np.sin(angle)
+            gamma_decaying_derivative = -0.5 * np.sin(angle)
 
-            # the weighted sum for computing the harmonised AND converged
-            # function has the form: "gamma * harmonised + (1-gamma) * convergence"
-            # depending on which product we want to compute (LHS or RHS of sum),
-            # we need gamma or 1-gamma, therefore we include the following condition
-            if self.apply_to_convergence:
-                return -gamma_derivative
-
-            return gamma_derivative
+            return gamma_decaying_derivative
 
         if not isinstance(x, np.ndarray):
-            if x <= self.initial_time:
+            if x <= self.initial_time or x >= self.final_time:
                 return 0.0
 
-            if x >= self.final_time:
-                return 0.0
+            gamma_rising_derivative = calc_gamma_rising_derivative(x)
 
-            return decay_derivative(x)
+            # The weighted sum for computing the harmonised AND converged
+            # function has the form: "gamma * harmonised + (1-gamma) * convergence".
+            # Depending on which product we want to compute (LHS or RHS of sum),
+            # we need gamma or 1-gamma, therefore we include the following condition
+            # in all our return statements.
+            if self.apply_to_convergence:
+                return -gamma_rising_derivative
+
+            return gamma_rising_derivative
 
         # apply decay function only to values that lie between harmonisation
         # time and convergence-time
-        x_decay = np.logical_and(
-            np.where(x > self.initial_time), np.where(x < self.final_time)
-        )
-        gamma = np.zeros_like(x)
-        gamma[x_decay] = decay_derivative(x[x_decay])
+        x_decay = np.where(np.logical_and(x > self.initial_time, x < self.final_time))
+        gamma_rising_derivative = np.zeros_like(x, dtype=np.floating)
+        gamma_rising_derivative[x_decay] = calc_gamma_rising_derivative(x[x_decay])
 
-        return gamma
+        if self.apply_to_convergence:
+            return -gamma_rising_derivative
+        return gamma_rising_derivative
 
     def derivative(self) -> CosineDecaySplineHelperDerivative:
         """

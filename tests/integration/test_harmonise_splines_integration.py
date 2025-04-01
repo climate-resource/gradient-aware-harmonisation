@@ -119,7 +119,7 @@ def test_target_and_harmonisee_differ(convergence_time, harmonisation_time):
         harmonisee=harmonisee,
         target=target,
         harmonisation_time=harmonisation_time,
-        converge_to=target,
+        converge_to=harmonisee,
         convergence_time=convergence_time,
     )
 
@@ -132,7 +132,7 @@ def test_target_and_harmonisee_differ(convergence_time, harmonisation_time):
         harmonised=harmonised_spline,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=target,
+        convergence_spline=harmonisee,
         convergence_time=convergence_time_exp,
     )
 
@@ -158,7 +158,7 @@ def test_more_realistic(convergence_time, harmonisation_time):
         harmonisee=harmonisee,
         target=target,
         harmonisation_time=harmonisation_time,
-        converge_to=target,
+        converge_to=harmonisee,
         convergence_time=convergence_time,
     )
 
@@ -171,7 +171,7 @@ def test_more_realistic(convergence_time, harmonisation_time):
         harmonised=harmonised_spline,
         target=target,
         harmonisation_time=harmonisation_time,
-        convergence_spline=target,
+        convergence_spline=harmonisee,
         convergence_time=convergence_time_exp,
     )
 
