@@ -21,6 +21,18 @@ from the examples given in that link.
 
 <!-- towncrier release notes start -->
 
+## Python package for zero- and first-order continuous timeseries v0.4.0 (2025-03-20)
+
+### ⚠️ Breaking Changes
+
+- Renamed `gradient_aware_harmonisation.harmoniser` to `gradient_aware_harmonisation.harmonise` (without the 'e') ([#8](https://github.com/climate-resource/gradient-aware-harmonisation/pull/8))
+- Updated internal use of the API to handle the change to the interface (this change is largely driven by representing a constant also as a spline) ([#9](https://github.com/climate-resource/gradient-aware-harmonisation/pull/9))
+
+### 🔧 Trivial/Internal Changes
+
+- [#6](https://github.com/climate-resource/gradient-aware-harmonisation/pull/6)
+
+
 ## Python package for zero- and first-order continuous timeseries v0.3.0 (2025-03-17)
 
 ### ⚠️ Breaking Changes

@@ -737,7 +737,7 @@ wheels = [
 
 [[package]]
 name = "gradient-aware-harmonisation"
-version = "0.3.1a1"
+version = "0.4.1a1"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
