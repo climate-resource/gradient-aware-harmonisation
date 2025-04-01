@@ -124,7 +124,7 @@ class CosineDecaySplineHelperDerivative:
             apply_to_convergence=self.apply_to_convergence,
         )
 
-    def antiderivative(self) -> SumOfSplines:
+    def antiderivative(self) -> CosineDecaySplineHelperDerivative:
         """
         Calculate the anti-derivative/integral of self
 
