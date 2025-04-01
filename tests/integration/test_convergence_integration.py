@@ -13,6 +13,13 @@ from gradient_aware_harmonisation.spline import SplineScipy
 
 
 def test_cosine_decay_spline():
+    """
+    test gamma for different time values (both single value and array)
+
+    + gamma = 1 for gamma <= harmonisation_time
+    + gamma = 0 for gamma >= convergence_time
+    + gamma = cosine_decay(x) for harmonisation_time < gamma < convergence_time
+    """
     spline = CosineDecaySplineHelper(
         initial_time=2.0,
         final_time=10.0,
@@ -33,7 +40,15 @@ def test_cosine_decay_spline():
     )
 
 
-def test_cosine_decay_spline_apply_to_convergenc():
+def test_cosine_decay_spline_apply_to_convergence():
+    """
+    test (1-gamma) for different time values (both single value and array)
+
+    + gamma = 1-1=0 for gamma <= harmonisation_time
+    + gamma = 1-0=0 for gamma >= convergence_time
+    + gamma = 1-cosine_decay(x) for harmonisation_time < gamma < convergence_time
+
+    """
     spline = CosineDecaySplineHelper(
         initial_time=2.0, final_time=10.0, apply_to_convergence=True
     )
@@ -58,18 +73,31 @@ def test_cosine_decay_spline_apply_to_convergenc():
 
 
 def test_cosine_decay_spline_sum():
+    """
+    test decay for gamma and (1-gamma)
+
+    expected_res = gamma + (1-gamma) = 1
+
+    """
     spline = CosineDecaySplineHelper(
         initial_time=2.0, final_time=10.0, apply_to_convergence=False
     )
-    spline_to_convegence = CosineDecaySplineHelper(
+    spline_to_convergence = CosineDecaySplineHelper(
         initial_time=2.0, final_time=10.0, apply_to_convergence=True
     )
 
     x_vals = np.linspace(-5.0, 15.0, 100)
-    np.testing.assert_equal(1.0, spline(x_vals) + spline_to_convegence(x_vals))
+    np.testing.assert_equal(1.0, spline(x_vals) + spline_to_convergence(x_vals))
 
 
 def test_cosine_decay_spline_derivative():
+    """
+    test derivative gamma for different time values (both single value and array)
+
+    + gamma = 0 harmonisation_time > gamma > convergence_time
+    + gamma = cosine_decay_derivative(x) for harm_time < gamma < conv_time
+
+    """
     spline = CosineDecaySplineHelper(
         initial_time=2.0,
         final_time=10.0,
@@ -91,6 +119,13 @@ def test_cosine_decay_spline_derivative():
 
 
 def test_cosine_decay_spline_derivative_apply_to_convergence():
+    """
+    test derivative (1-gamma) for different time values (both single value and array)
+
+    + gamma = 0 harmonisation_time > gamma > convergence_time
+    + gamma = -cosine_decay_derivative(x) for harm_time < gamma < conv_time
+
+    """
     spline = CosineDecaySplineHelper(
         initial_time=2.0, final_time=10.0, apply_to_convergence=True
     ).derivative()
@@ -111,6 +146,12 @@ def test_cosine_decay_spline_derivative_apply_to_convergence():
 
 
 def test_cosine_decay_spline_derivative_sum():
+    """
+    test derivative decay for gamma and (1-gamma)
+
+    expected_res = gamma + (-gamma) = 0
+
+    """
     spline = CosineDecaySplineHelper(
         initial_time=2.0, final_time=10.0, apply_to_convergence=False
     ).derivative()
@@ -124,6 +165,15 @@ def test_cosine_decay_spline_derivative_sum():
 
 
 def test_get_cosine_decay_harmonised_spline():
+    """
+    test weighted sum of two splines
+
+    gamma * spline1  + (1-gamma) * spline2 with
+    numerator = (pi * x - harmonisation_time)
+    denominator = (convergence_time - harmonisation_time)
+    gamma = 0.5 * (1 + cos(numerator/denominator)
+
+    """
     scipy = pytest.importorskip("scipy")
 
     x_min = 0.0
