@@ -33,7 +33,6 @@ def test_add_constant_to_spline(const):
     np.testing.assert_equal(start(x_fine) + const, res(x_fine))
     # TODO:
     # - test derivative
-    # - test antiderivative
 
 
 @pytest.mark.parametrize("const", (-1.3, 0.0, 2.5))
