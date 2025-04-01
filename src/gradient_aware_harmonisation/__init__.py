@@ -11,7 +11,6 @@ from gradient_aware_harmonisation.convergence import get_cosine_decay_harmonised
 from gradient_aware_harmonisation.timeseries import Timeseries
 from gradient_aware_harmonisation.utils import (
     GetHarmonisedSplineLike,
-    add_constant_to_spline,
     harmonise_splines,
 )
 
@@ -62,7 +61,7 @@ def harmonise(  # noqa: PLR0913
         If not supplied, we converge to convergence timeseries
         at the last time point in harmonisee_timeseries.
 
-    convergence_method
+    get_harmonised_spline
         The method to use to converge back to the convergence timeseries.
 
     Returns
@@ -83,40 +82,14 @@ def harmonise(  # noqa: PLR0913
     harmonisee_spline = harmonisee_timeseries.to_spline()
     convergence_spline = convergence_timeseries.to_spline()
 
-    # compute derivatives of splines
-    target_dspline = target_spline.derivative()
-    harmonisee_dspline = harmonisee_spline.derivative()
-
-    # match first-order derivatives
-    diff_dspline = np.subtract(
-        target_dspline(harmonisation_time), harmonisee_dspline(harmonisation_time)
-    )
-
-    harmonised_first_derivative = add_constant_to_spline(
-        in_spline=harmonisee_dspline, constant=diff_dspline
-    )
-
-    # integrate to match zero-order derivative
-    harmonised_spline_first_derivative_only = (
-        harmonised_first_derivative.antiderivative()
-    )
-
-    # match zero-order derivatives
-    diff_spline = np.subtract(
-        target_spline(harmonisation_time),
-        harmonised_spline_first_derivative_only(harmonisation_time),
-    )
-
-    harmonised_spline_no_convergence = add_constant_to_spline(
-        in_spline=harmonised_spline_first_derivative_only, constant=diff_spline
-    )
-
     # get harmonised spline
-    harmonised_spline = get_harmonised_spline(
+    harmonised_spline = harmonise_splines(
+        harmonisee=harmonisee_spline,
+        target=target_spline,
         harmonisation_time=harmonisation_time,
+        converge_to=convergence_spline,
         convergence_time=convergence_time,
-        harmonised_spline_no_convergence=harmonised_spline_no_convergence,
-        convergence_spline=convergence_spline,
+        get_harmonised_spline=get_harmonised_spline,
     )
 
     # convert harmonised spline to timeseries

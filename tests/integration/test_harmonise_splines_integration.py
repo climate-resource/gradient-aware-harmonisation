@@ -85,7 +85,6 @@ def test_target_and_harmonisee_equal(convergence_time, harmonisation_time):
         harmonisation_time=harmonisation_time,
         converge_to=target,
         convergence_time=convergence_time,
-        # TODO: think about convergence method
     )
 
     if convergence_time is None:
@@ -122,7 +121,6 @@ def test_target_and_harmonisee_differ(convergence_time, harmonisation_time):
         harmonisation_time=harmonisation_time,
         converge_to=harmonisee,
         convergence_time=convergence_time,
-        # TODO: think about convergence method
     )
 
     if convergence_time is None:
@@ -162,7 +160,6 @@ def test_more_realistic(convergence_time, harmonisation_time):
         harmonisation_time=harmonisation_time,
         converge_to=harmonisee,
         convergence_time=convergence_time,
-        # TODO: think about convergence method
     )
 
     if convergence_time is None:

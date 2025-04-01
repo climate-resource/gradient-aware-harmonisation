@@ -19,24 +19,31 @@ from gradient_aware_harmonisation.spline import (
 
 
 @define
-class CosineDecaySplineHelperDerivative:
+class CosineDecaySplineHelper:
     """
-    Derivative of [CosineDecaySplineHelper][(m).]
+    Spline that supports being used as a cosine-decay between splines
+
+    Between `initial_time` and `final_time`,
+    we return values based on a cosine-decay between 1 and 0
+    if `self.apply_to_convergence` is `False`,
+    otherwise we return values based on a cosine-increase between 0 and 1.
     """
 
     initial_time: Union[float, int]
     """
-    Initial time of the cosine-decay
+    At and before this time, we return values from `initial`
     """
 
     final_time: Union[float, int]
     """
-    Final time of the cosine-decay
+    At and after this time, we return values from `final`
     """
 
     apply_to_convergence: bool = False
     """
     Is this helper being applied to the convergence spline?
+
+    If `True`, we return 1 - the weights, rather than the weights.
     """
 
     # domain: ClassVar[list[float, float]] = [
@@ -54,7 +61,7 @@ class CosineDecaySplineHelperDerivative:
     @overload
     def __call__(self, x: NP_ARRAY_OF_FLOAT_OR_INT) -> NP_ARRAY_OF_FLOAT_OR_INT: ...
 
-    def __call__(
+    def __call__(  # noqa: PLR0911
         self, x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT
     ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
         """
@@ -124,7 +131,7 @@ class CosineDecaySplineHelperDerivative:
         """
         raise NotImplementedError
 
-    def antiderivative(self) -> SumOfSplines:
+    def antiderivative(self) -> CosineDecaySplineHelperDerivative:
         """
         Calculate the anti-derivative/integral of self
 
@@ -132,40 +139,29 @@ class CosineDecaySplineHelperDerivative:
         -------
         :
             Anti-derivative of self
-
-        Raises
-        ------
-        NotImplementedError
         """
         raise NotImplementedError
 
 
 @define
-class CosineDecaySplineHelper:
+class CosineDecaySplineHelperDerivative:
     """
-    Spline that supports being used as a cosine-decay between splines
-
-    Between `initial_time` and `final_time`,
-    we return values based on a cosine-decay between 1 and 0
-    if `self.apply_to_convergence` is `False`,
-    otherwise we return values based on a cosine-increase between 0 and 1.
+    Derivative of [CosineDecaySplineHelper][(m).]
     """
 
     initial_time: Union[float, int]
     """
-    At and before this time, we return values from `initial`
+    Initial time of the cosine-decay
     """
 
     final_time: Union[float, int]
     """
-    At and after this time, we return values from `final`
+    Final time of the cosine-decay
     """
 
     apply_to_convergence: bool = False
     """
     Is this helper being applied to the convergence spline?
-
-    If `True`, we return 1 - the weights, rather than the weights.
     """
 
     # domain: ClassVar[list[float, float]] = [
@@ -204,10 +200,12 @@ class CosineDecaySplineHelper:
         def calc_gamma(
             x: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT,
         ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
-            """Get cosine-decay"""
-            angle: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT = np.divide(
-                np.pi * (x - self.initial_time), (self.final_time - self.initial_time)
+            """Get cosine-decay derivative"""
+            # compute weight (here: gamma) according to a cosine-decay
+            angle = (
+                np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
             )
+
             gamma_decaying = 0.5 * (1 + np.cos(angle))
 
             return gamma_decaying
@@ -240,6 +238,7 @@ class CosineDecaySplineHelper:
 
         if self.apply_to_convergence:
             return 1.0 - gamma
+
         return gamma
 
     def derivative(self) -> CosineDecaySplineHelperDerivative:
@@ -257,7 +256,7 @@ class CosineDecaySplineHelper:
             apply_to_convergence=self.apply_to_convergence,
         )
 
-    def antiderivative(self) -> SumOfSplines:
+    def antiderivative(self) -> CosineDecaySplineHelperDerivative:
         """
         Calculate the anti-derivative/integral of self
 
@@ -265,6 +264,10 @@ class CosineDecaySplineHelper:
         -------
         :
             Anti-derivative of self
+
+        Raises
+        ------
+        NotImplementedError
         """
         raise NotImplementedError
 
@@ -276,7 +279,7 @@ def get_cosine_decay_harmonised_spline(
     convergence_spline: Spline,
 ) -> SumOfSplines:
     """
-    Generate the harmonised spline
+    Generate the harmonised spline based on a cosine-decay
 
     Parameters
     ----------
@@ -306,13 +309,11 @@ def get_cosine_decay_harmonised_spline(
     # The harmonised spline is considered as the spline that match
     # the target-spline at the harmonisation time (wrt to zero-and
     # first order derivative). Then we use a decay function to let
-    # the harmonised spline converge to the convergenve-spline (by
-    # default: harmonisee). This decay function has the form of a
-    # a weighted sum:
+    # the harmonised spline converge to the convergence-spline.
+    # This decay function has the form of a weighted sum:
     # weight * harmonised_spline + (1-weight) * convergence_spline
     # With weights decaying from 1 to 0 whereby the decay trajectory
-    # is determined by the corresponding approach (e.g. cosine,
-    # polynomial, etc.)
+    # is determined by the cosine decay.
     return SumOfSplines(
         ProductOfSplines(
             CosineDecaySplineHelper(
