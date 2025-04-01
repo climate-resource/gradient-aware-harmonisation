@@ -5,8 +5,6 @@ Gradient-aware harmonisation of timeseries
 import importlib.metadata
 from typing import Optional, Union
 
-import numpy as np
-
 from gradient_aware_harmonisation.convergence import get_cosine_decay_harmonised_spline
 from gradient_aware_harmonisation.timeseries import Timeseries
 from gradient_aware_harmonisation.utils import (
