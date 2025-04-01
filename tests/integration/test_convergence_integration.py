@@ -45,7 +45,7 @@ def test_cosine_decay_spline_apply_to_convergence():
     test (1-gamma) for different time values (both single value and array)
 
     + gamma = 1-1=0 for gamma <= harmonisation_time
-    + gamma = 1-0=0 for gamma >= convergence_time
+    + gamma = 1-0=1 for gamma >= convergence_time
     + gamma = 1-cosine_decay(x) for harmonisation_time < gamma < convergence_time
 
     """
