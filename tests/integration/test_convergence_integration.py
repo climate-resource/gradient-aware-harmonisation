@@ -157,7 +157,7 @@ def test_cosine_decay_spline_derivative_apply_to_convergence():
     np.testing.assert_equal(spline(3.0), -cos_deriv(3.0, 2.0, 10.0))
     # ensure correct computation of derivative itself
     integral, _ = scipy.integrate.quad(spline, 2.0, 10.0)
-    np.testing.assert_allclose(integral, -1.0)
+    np.testing.assert_allclose(integral, 1.0)
 
     # Array input
     np.testing.assert_equal(
