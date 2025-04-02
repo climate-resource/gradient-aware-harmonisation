@@ -402,7 +402,7 @@ class PolynomialDecaySplineHelper:
             """Get polynomial-decay"""
             # compute weight (here: gamma) according to polynomial-decay
             gamma_decaying = (
-                1 - (x - self.initial_time) / (self.initial_time - self.final_time)
+                1 - (x - self.initial_time) / (self.final_time - self.initial_time)
             ) ** self.power
 
             return gamma_decaying
