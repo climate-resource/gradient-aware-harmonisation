@@ -212,7 +212,9 @@ class CosineDecaySplineHelperDerivative:
             angle = (
                 np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
             )
-            gamma_decaying_derivative = -0.5 * np.sin(angle)
+
+            const_factor = -np.pi / (2 * (self.final_time - self.initial_time))
+            gamma_decaying_derivative = const_factor * np.sin(angle)
 
             return gamma_decaying_derivative
 
