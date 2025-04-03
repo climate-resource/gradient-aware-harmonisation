@@ -745,10 +745,16 @@ class LogisticDecaySplineHelper:
             x_prime = x - self.initial_time
             delta = self.final_time - self.initial_time
 
-            gamma_decaying = 1 - 1 / (
+            gamma_decaying: int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT = (
                 1
-                + np.exp(
-                    -2 * np.exp(self.slope) * delta * x_prime + 3 * delta + self.shift
+                - 1
+                / (
+                    1
+                    + np.exp(
+                        -2 * np.exp(self.slope) * delta * x_prime
+                        + 3 * delta
+                        + self.shift
+                    )
                 )
             )
 
