@@ -32,6 +32,7 @@ import numpy as np
 
 from gradient_aware_harmonisation import harmonise
 from gradient_aware_harmonisation.convergence import (
+    get_logistic_decay_harmonised_spline,
     get_polynomial_decay_harmonised_spline,
 )
 from gradient_aware_harmonisation.plotting import plotting
@@ -113,6 +114,28 @@ harmonised_timeseries = harmonise(
     harmonisation_time=harmonisation_time,
     convergence_time=convergence_time,
     get_harmonised_spline=partial(get_polynomial_decay_harmonised_spline, power=2.0),
+)
+
+plotting(
+    harmonisee_timeseries,
+    target_timeseries,
+    harmonised_timeseries,
+    harmonisation_time,
+    convergence_time,
+)
+
+# %% [markdown]
+# ### Use logistic-decay
+
+# %%
+convergence_time = 8.0
+
+harmonised_timeseries = harmonise(
+    target_timeseries=target_timeseries,
+    harmonisee_timeseries=harmonisee_timeseries,
+    harmonisation_time=harmonisation_time,
+    convergence_time=convergence_time,
+    get_harmonised_spline=partial(get_logistic_decay_harmonised_spline, scaling=0.0),
 )
 
 plotting(
