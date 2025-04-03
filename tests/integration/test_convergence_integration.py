@@ -98,22 +98,34 @@ def test_cosine_decay_spline_derivative():
     + gamma = cosine_decay_derivative(x) for harm_time < time < conv_time
 
     """
+    scipy = pytest.importorskip("scipy")
+
     spline = CosineDecaySplineHelper(
         initial_time=2.0,
         final_time=10.0,
     ).derivative()
+
+    def cos_deriv(x, initial_time, final_time):
+        angle = np.pi * (x - initial_time) / (final_time - initial_time)
+        const_factor = -np.pi / (2 * (final_time - initial_time))
+        return const_factor * np.sin(angle)
 
     # Before the decay
     np.testing.assert_equal(spline(1.0), 0.0)
     # After the decay
     np.testing.assert_equal(spline(11.0), 0.0)
     # In the decay
-    np.testing.assert_equal(spline(6.0), -0.5)
-    np.testing.assert_equal(spline(3.0), -0.5 * np.sin(np.pi * 1.0 / 8.0))
+    np.testing.assert_equal(spline(6.0), cos_deriv(6.0, 2.0, 10.0))
+    np.testing.assert_equal(spline(3.0), cos_deriv(3.0, 2.0, 10.0))
+    # ensure correct computation of derivative itself
+    integral, _ = scipy.integrate.quad(spline, 2.0, 10.0)
+    np.testing.assert_allclose(integral, -1.0)
 
     # Array input
     np.testing.assert_equal(
-        np.array([0.0, 0.0, -0.5 * np.sin(np.pi * 1.0 / 8.0), -0.5, 0.0, 0.0]),
+        np.array(
+            [0.0, 0.0, cos_deriv(3.0, 2.0, 10.0), cos_deriv(6.0, 2.0, 10.0), 0.0, 0.0]
+        ),
         spline(np.array([1.5, 2.0, 3.0, 6.0, 10.0, 11.1])),
     )
 
@@ -125,21 +137,33 @@ def test_cosine_decay_spline_derivative_apply_to_convergence():
     + gamma = 0 harmonisation_time > time > convergence_time
     + gamma = -cosine_decay_derivative(x) for harm_time < x < conv_time
     """
+    scipy = pytest.importorskip("scipy")
+
     spline = CosineDecaySplineHelper(
         initial_time=2.0, final_time=10.0, apply_to_convergence=True
     ).derivative()
+
+    def cos_deriv(x, initial_time, final_time):
+        angle = np.pi * (x - initial_time) / (final_time - initial_time)
+        const_factor = -np.pi / (2 * (final_time - initial_time))
+        return const_factor * np.sin(angle)
 
     # Before the decay
     np.testing.assert_equal(spline(1.0), 0.0)
     # After the decay
     np.testing.assert_equal(spline(11.0), 0.0)
     # In the decay
-    np.testing.assert_equal(spline(6.0), 0.5)
-    np.testing.assert_equal(spline(3.0), 0.5 * np.sin(np.pi * 1.0 / 8.0))
+    np.testing.assert_equal(spline(6.0), -cos_deriv(6.0, 2.0, 10.0))
+    np.testing.assert_equal(spline(3.0), -cos_deriv(3.0, 2.0, 10.0))
+    # ensure correct computation of derivative itself
+    integral, _ = scipy.integrate.quad(spline, 2.0, 10.0)
+    np.testing.assert_allclose(integral, 1.0)
 
     # Array input
     np.testing.assert_equal(
-        np.array([0.0, 0.0, 0.5 * np.sin(np.pi * 1.0 / 8.0), 0.5, 0.0, 0.0]),
+        np.array(
+            [0.0, 0.0, -cos_deriv(3.0, 2.0, 10.0), -cos_deriv(6.0, 2.0, 10.0), 0.0, 0.0]
+        ),
         spline(np.array([1.5, 2.0, 3.0, 6.0, 10.0, 11.1])),
     )
 
