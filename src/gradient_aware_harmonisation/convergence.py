@@ -687,11 +687,14 @@ class LogisticDecaySplineHelper:
     At and after this time, we return values from `final`
     """
 
-    scaling: Union[float, int]
+    slope: Union[float, int]
     """
-    Scaling factor of logistic decay; with scaling >= 0.
+    Slope of logistic function
+    """
 
-    Determines how fast convergence is. Higher values increase steepness.
+    shift: Union[float, int]
+    """
+    Shift of logistic function
     """
 
     apply_to_convergence: bool = False
@@ -739,13 +742,14 @@ class LogisticDecaySplineHelper:
             """Get polynomial-decay"""
             # compute weight (here: gamma) according to logistic-decay
 
-            x_prime = x - self.initial_time - 1
-            shift = (self.final_time - self.initial_time) / 2
-            # mid-point of sigmoid; equivalent to 1/2
-            mid_point = 2.0
+            x_prime = x - self.initial_time
+            delta = self.final_time - self.initial_time
 
             gamma_decaying = 1 - 1 / (
-                1 + (1 / mid_point) * np.exp(-self.scaling * (x_prime - shift))
+                1
+                + np.exp(
+                    -2 * np.exp(self.slope) * delta * x_prime + 3 * delta + self.shift
+                )
             )
 
             return gamma_decaying
@@ -794,7 +798,8 @@ class LogisticDecaySplineHelper:
         return LogisticDecaySplineHelperDerivative(
             initial_time=self.initial_time,
             final_time=self.final_time,
-            power=self.power,
+            slope=self.slope,
+            shift=self.shift,
             apply_to_convergence=self.apply_to_convergence,
         )
 
@@ -826,11 +831,14 @@ class LogisticDecaySplineHelperDerivative:
     Final time of the logistic-decay
     """
 
-    scaling: Union[float, int]
+    slope: Union[float, int]
     """
-    Scaling factor of logistic decay; with scaling >= 0.
+    Slope of logistic function
+    """
 
-    Determines how fast convergence is. Higher values increase steepness.
+    shift: Union[float, int]
+    """
+    Shift of logistic function
     """
 
     apply_to_convergence: bool = False
@@ -876,19 +884,14 @@ class LogisticDecaySplineHelperDerivative:
         ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
             """Get logistic-decay derivative"""
             # compute derivative of gamma according to a logistic-decay
-            x_prime = x - self.initial_time - 1
-            shift = (self.final_time - self.initial_time) / 2
-            # mid-point of sigmoid; equivalent to 1/2
-            mid_point = 2.0
+            x_prime = x - self.initial_time
+            delta = self.final_time - self.initial_time
+            scaler = 2 * self.slope * delta
 
-            numerator = (
-                mid_point * self.scaling * np.exp(self.scaling * (x_prime - shift))
-            )
-            denominator = (
-                mid_point * np.exp(self.scaling * (x_prime - shift)) + 1
-            ) ** 2
+            numerator = scaler * np.exp(-scaler * x_prime + 3 * delta + self.shift)
+            denominator = np.exp(-scaler * x_prime + 3 * delta + self.shift)
 
-            gamma_decaying_derivative = -numerator / denominator
+            gamma_decaying_derivative = -numerator / (denominator + 1) ** 2
 
             return gamma_decaying_derivative
 
@@ -945,12 +948,13 @@ class LogisticDecaySplineHelperDerivative:
         raise NotImplementedError
 
 
-def get_logistic_decay_harmonised_spline(
+def get_logistic_decay_harmonised_spline(  # noqa: PLR0913
     harmonisation_time: Union[int, float],
     convergence_time: Union[int, float],
     harmonised_spline_no_convergence: Spline,
     convergence_spline: Spline,
-    scaling: Union[int, float],
+    slope: Union[int, float],
+    shift: Union[int, float],
 ) -> SumOfSplines:
     """
     Generate the harmonised spline based on a logistic-decay
@@ -975,9 +979,13 @@ def get_logistic_decay_harmonised_spline(
     convergence_spline
         The spline to which the result should converge
 
-    scaling
-        Scaling factor of logistic decay; scaling >= 0
-        Determines how fast convergence is performed.
+    slope
+        Determine steepness of logistic function
+        Slope < 0: decrease slope; slope > 0: increase slope
+
+    shift
+        Shift the logistic function horizontally
+        Shift < 0: left and shift > 0: right
 
     Returns
     -------
@@ -997,7 +1005,8 @@ def get_logistic_decay_harmonised_spline(
             LogisticDecaySplineHelper(
                 initial_time=harmonisation_time,
                 final_time=convergence_time,
-                scaling=scaling,
+                slope=slope,
+                shift=shift,
                 apply_to_convergence=False,
             ),
             harmonised_spline_no_convergence,
@@ -1006,7 +1015,8 @@ def get_logistic_decay_harmonised_spline(
             LogisticDecaySplineHelper(
                 initial_time=harmonisation_time,
                 final_time=convergence_time,
-                scaling=scaling,
+                slope=slope,
+                shift=shift,
                 apply_to_convergence=True,
             ),
             convergence_spline,

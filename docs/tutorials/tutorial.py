@@ -135,7 +135,9 @@ harmonised_timeseries = harmonise(
     harmonisee_timeseries=harmonisee_timeseries,
     harmonisation_time=harmonisation_time,
     convergence_time=convergence_time,
-    get_harmonised_spline=partial(get_logistic_decay_harmonised_spline, scaling=2.0),
+    get_harmonised_spline=partial(
+        get_logistic_decay_harmonised_spline, slope=-1.0, shift=-8.0
+    ),
 )
 
 plotting(

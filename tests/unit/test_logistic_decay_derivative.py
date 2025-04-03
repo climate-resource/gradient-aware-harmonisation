@@ -20,7 +20,8 @@ def test_LogisticDecaySplineHelperDerivative():
         initial_time=initial_time,
         final_time=final_time,
         apply_to_convergence=apply_to_convergence,
-        scaling=2.0,
+        slope=np.exp(0.0),
+        shift=0.0,
     )
 
     integral, _ = scipy.integrate.quad(
