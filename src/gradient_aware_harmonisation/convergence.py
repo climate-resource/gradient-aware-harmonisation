@@ -570,7 +570,7 @@ class PolynomialDecaySplineHelperDerivative:
             return -gamma_rising_derivative
         return gamma_rising_derivative
 
-    def derivative(self) -> CosineDecaySplineHelperDerivative:
+    def derivative(self) -> PolynomialDecaySplineHelperDerivative:
         """
         Calculate the derivative of self
 
@@ -581,7 +581,7 @@ class PolynomialDecaySplineHelperDerivative:
         """
         raise NotImplementedError
 
-    def antiderivative(self) -> CosineDecaySplineHelperDerivative:
+    def antiderivative(self) -> PolynomialDecaySplineHelperDerivative:
         """
         Calculate the anti-derivative/integral of self
 
