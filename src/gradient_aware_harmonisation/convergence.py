@@ -738,16 +738,15 @@ class LogisticDecaySplineHelper:
         ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
             """Get polynomial-decay"""
             # compute weight (here: gamma) according to logistic-decay
-            # scaling is performed to make scaling parameter more interpretable
-            # scaling in (0, +inf)
-            scale_prime = (
-                (self.final_time + self.initial_time)
-                / (self.final_time - self.initial_time)
-            ) + abs(self.scaling)
 
-            beta = (x - self.initial_time) + (self.final_time + self.initial_time) / 2
+            x_prime = x - self.initial_time - 1
+            shift = (self.final_time - self.initial_time) / 2
+            # mid-point of sigmoid; equivalent to 1/2
+            mid_point = 2.0
 
-            gamma_decaying = 1 - 1 / 1 + np.exp(-scale_prime * beta)
+            gamma_decaying = 1 - 1 / (
+                1 + (1 / mid_point) * np.exp(-self.scaling * (x_prime - shift))
+            )
 
             return gamma_decaying
 
@@ -877,16 +876,20 @@ class LogisticDecaySplineHelperDerivative:
         ) -> int | float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT:
             """Get logistic-decay derivative"""
             # compute derivative of gamma according to a logistic-decay
+            x_prime = x - self.initial_time - 1
+            shift = (self.final_time - self.initial_time) / 2
+            # mid-point of sigmoid; equivalent to 1/2
+            mid_point = 2.0
 
-            mid_point = (self.final_time + self.initial_time) / 2
-            numerator = self.scaling * np.exp(
-                mid_point - self.scaling * (x - self.initial_time)
+            numerator = (
+                mid_point * self.scaling * np.exp(self.scaling * (x_prime - shift))
             )
             denominator = (
-                np.exp(mid_point - self.scaling * (x - self.initial_time)) + 1
+                mid_point * np.exp(self.scaling * (x_prime - shift)) + 1
             ) ** 2
 
             gamma_decaying_derivative = -numerator / denominator
+
             return gamma_decaying_derivative
 
         if not isinstance(x, np.ndarray):
