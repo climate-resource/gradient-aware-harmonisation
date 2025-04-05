@@ -239,15 +239,15 @@ def test_no_change():
 
     diverge_from = SplineScipy(
         scipy.interpolate.PPoly(
-            c=[[1.0, 0.0, 0.0]],
-            x=[-1e8, 1e8],
+            c=[[1.0], [0.0], [0.0]],
+            x=[0.0, 1e8],
         )
     )
 
     harmonisee = SplineScipy(
         scipy.interpolate.PPoly(
-            c=[[2.0, -1.0]],
-            x=[-1e8, 1e8],
+            c=[[2.0], [-1.0]],
+            x=[0.0, 1e8],
         )
     )
 
@@ -262,7 +262,7 @@ def test_no_change():
     # harmonisee therafter
     exp = SplineScipy(
         scipy.interpolate.PPoly(
-            c=[[1.0, 0.0, 0.0], [0.0, 2.0, -1.0]],
+            c=[[1.0, 0.0], [0.0, 2.0], [0.0, 1.0]],
             x=[0.0, 1.0, 1e8],
         )
     )
