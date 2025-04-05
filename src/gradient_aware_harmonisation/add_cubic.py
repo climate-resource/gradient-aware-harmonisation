@@ -43,13 +43,26 @@ def harmonise_splines_add_cubic(
     a = soln[0]
     b = soln[1]
 
-    cubic_to_add = SplineScipy(
-        scipy.interpolate.PPoly(
-            c=[[a, 0.0], [b, 0.0], [c, 0.0], [d, 0.0]],
-            # TODO: better upper limit than 1e8
-            x=[harmonisation_time, convergence_time, 1e8],
+    if harmonisation_time <= convergence_time:
+        cubic_to_add = SplineScipy(
+            scipy.interpolate.PPoly(
+                c=[[a, 0.0], [b, 0.0], [c, 0.0], [d, 0.0]],
+                # TODO: better upper limit than 1e8
+                x=[harmonisation_time, convergence_time, 1e8],
+            )
         )
-    )
+
+    else:
+        # y = m(x - x_0) + c
+        # y = m(x_0 - x) + c
+        #   = -m(x - x_0) + c
+        cubic_to_add = SplineScipy(
+            scipy.interpolate.PPoly(
+                c=[[a, 0.0], [b, 0.0], [c, 0.0], [d, 0.0]],
+                # TODO: better upper limit than 1e8
+                x=[-1e8, convergence_time, harmonisation_time],
+            )
+        )
 
     res = SumOfSplines(
         harmonisee,
