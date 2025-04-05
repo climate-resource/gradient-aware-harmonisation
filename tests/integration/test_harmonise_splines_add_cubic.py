@@ -7,8 +7,34 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from gradient_aware_harmonisation.add_cubic import harmonise_splines_add_cubic
+from gradient_aware_harmonisation.add_cubic import (
+    harmonise_splines_add_cubic,
+    taylor_shift,
+)
 from gradient_aware_harmonisation.spline import Spline, SplineScipy
+
+
+@pytest.mark.parametrize(
+    "coeffs, shift, coeffs_exp",
+    (
+        # Helpful for generating these: https://planetcalc.com/7726/
+        pytest.param([0.5], 1.0, [0.5], id="const"),
+        pytest.param([-0.5], 2.0, [-0.5], id="const_neg"),
+        pytest.param([1.0, -0.5], 2.0, [1.0, 1.5], id="linear"),
+        pytest.param([2.0, 0.2], -1.5, [2.0, -2.8], id="linear_neg"),
+        pytest.param([1.0, 1.0, -0.5], 2.0, [1.0, 5.0, 5.5], id="quadratic"),
+        pytest.param([2.0, 2.0, 1.0], -1.0, [2.0, -2.0, 1.0], id="quadratic_neg"),
+        pytest.param([3.0, 2.0, 1.0, 0.0], 2.0, [3.0, 20.0, 45.0, 34.0], id="cubic"),
+        pytest.param([1.0, 1.0, 1.0, 1.0], -1.0, [1.0, -2.0, 2.0, 0.0], id="cubic_neg"),
+    ),
+)
+def test_taylor_shift(coeffs, shift, coeffs_exp):
+    coeffs = np.array(coeffs)
+    coeffs_exp = np.array(coeffs_exp)
+
+    res = taylor_shift(coeffs, shift)
+
+    np.testing.assert_equal(res, coeffs_exp)
 
 
 def check_expected_continuity(
@@ -313,6 +339,7 @@ def test_basic_case_harmonisation_time_greater_than_convergence_time():
             x=[-10.0, 10.0],
         )
     )
+    assert diverge_from(harmonisation_time) == 1.0
 
     # y = 0.5x - 1
     harmonisee = SplineScipy(
@@ -321,6 +348,7 @@ def test_basic_case_harmonisation_time_greater_than_convergence_time():
             x=[-10.0, 10.0],
         )
     )
+    assert harmonisee(convergence_time) == -1.5
 
     res = harmonise_splines_add_cubic(
         diverge_from=diverge_from,
