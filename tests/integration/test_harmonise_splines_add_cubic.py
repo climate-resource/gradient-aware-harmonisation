@@ -75,7 +75,8 @@ def check_res_compared_to_exp(  # noqa: PLR0913
     )
     np.testing.assert_allclose(
         res.derivative()(time_check),
-        exp.derivative()(time_check, err_msg="Difference in gradients"),
+        exp.derivative()(time_check),
+        err_msg="Difference in gradients",
     )
 
 
@@ -181,7 +182,7 @@ def test_basic_case():
     # harmonisee therafter
     exp = SplineScipy(
         scipy.interpolate.PPoly(
-            c=[[2.5, 0.0], [-4.0, 0.0], [1.0, 0.5], [0.0, -1.0]],
+            c=[[2.5, 0.0], [-4.0, 0.0], [1.0, 0.5], [0.0, -0.5]],
             x=[harmonisation_time, convergence_time, 1e8],
         )
     )
