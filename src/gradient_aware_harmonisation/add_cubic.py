@@ -56,15 +56,28 @@ def harmonise_splines_add_cubic(
             "harmonise_splines_add_cubic", requirement="scipy.interpolate"
         ) from exc
 
-    delta = convergence_time - harmonisation_time
-    a_matrix = np.array(
-        [
-            [0, 0, 0, 1],
-            [0, 0, 1, 0],
-            [delta**3, delta**2, delta, 1.0],
-            [3 * delta**2, 2 * delta, 1, 0.0],
-        ]
-    )
+    if convergence_time > harmonisation_time:
+        delta = convergence_time - harmonisation_time
+        a_matrix = np.array(
+            [
+                [0, 0, 0, 1],
+                [0, 0, 1, 0],
+                [delta**3, delta**2, delta, 1.0],
+                [3 * delta**2, 2 * delta, 1, 0.0],
+            ]
+        )
+
+    else:
+        delta = harmonisation_time - convergence_time
+        a_matrix = np.array(
+            [
+                [delta**3, delta**2, delta, 1.0],
+                [3 * delta**2, 2 * delta, 1, 0.0],
+                [0, 0, 0, 1],
+                [0, 0, 1, 0],
+            ]
+        )
+
     rhs = np.array(
         [
             diverge_from(harmonisation_time) - harmonisee(harmonisation_time),
@@ -80,30 +93,18 @@ def harmonise_splines_add_cubic(
     if harmonisation_time <= convergence_time:
         cubic_to_add = SplineScipy(
             scipy.interpolate.PPoly(
-                c=[
-                    [coeffs[0], 0.0],
-                    [coeffs[1], 0.0],
-                    [coeffs[2], 0.0],
-                    [coeffs[3], 0.0],
-                ],
-                # TODO: better upper limit than 1e8
+                c=np.vstack([coeffs, np.zeros_like(coeffs)]).T,
+                # TODO: better upper limit by using harmonisee.domain[1]
                 x=[harmonisation_time, convergence_time, 1e8],
             )
         )
 
     else:
-        # TODO: better lower limit than -100
-        x_le = -100.0
-        coeffs_shift = taylor_shift(coeffs, convergence_time - harmonisation_time)
         cubic_to_add = SplineScipy(
             scipy.interpolate.PPoly(
-                c=[
-                    [0.0, coeffs_shift[0]],
-                    [0.0, coeffs_shift[1]],
-                    [0.0, coeffs_shift[2]],
-                    [0.0, coeffs_shift[3]],
-                ],
-                x=[x_le, convergence_time, harmonisation_time],
+                c=np.vstack([np.zeros_like(coeffs), coeffs]).T,
+                # TODO: better lower limit by using harmonisee.domain[0]
+                x=[-1e8, convergence_time, harmonisation_time],
             )
         )
 
