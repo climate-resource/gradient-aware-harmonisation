@@ -84,7 +84,9 @@ class CosineDecaySplineHelper:
             """Get cosine-decay derivative"""
             # compute weight (here: gamma) according to a cosine-decay
             angle = (
-                np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
+                np.pi
+                * (x - self.initial_time)
+                / abs(self.final_time - self.initial_time)
             )
 
             gamma_decaying = 0.5 * (1 + np.cos(angle))
@@ -92,9 +94,16 @@ class CosineDecaySplineHelper:
             return gamma_decaying
 
         if not isinstance(x, np.ndarray):
-            if x <= self.initial_time:
+            if self.initial_time <= self.final_time:
+                if x <= self.initial_time:
+                    gamma: float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT = 1.0
+                elif x >= self.final_time:
+                    gamma = 0.0
+                else:
+                    gamma = calc_gamma(x)
+            elif x >= self.initial_time:
                 gamma: float | NP_FLOAT_OR_INT | NP_ARRAY_OF_FLOAT_OR_INT = 1.0
-            elif x >= self.final_time:
+            elif x <= self.final_time:
                 gamma = 0.0
             else:
                 gamma = calc_gamma(x)
@@ -109,10 +118,14 @@ class CosineDecaySplineHelper:
 
             return gamma
 
-        # apply decay function only to values that lie between harmonisation
-        # time and convergence-time
-        x_gte_final_time = np.where(x >= self.final_time)
-        x_decay = np.logical_and(x >= self.initial_time, x < self.final_time)
+        # apply decay function only to values that lie between
+        # harmonisation time and convergence-time
+        if self.initial_time <= self.final_time:
+            x_gte_final_time = np.where(x >= self.final_time)
+            x_decay = np.logical_and(x >= self.initial_time, x < self.final_time)
+        else:
+            x_gte_final_time = np.where(x <= self.final_time)
+            x_decay = np.logical_and(x <= self.initial_time, x > self.final_time)
         gamma = np.ones_like(x, dtype=np.floating)
         gamma[x_gte_final_time] = 0.0
         gamma[x_decay] = calc_gamma(x[x_decay])
@@ -210,14 +223,19 @@ class CosineDecaySplineHelperDerivative:
             """Get cosine-decay derivative"""
             # compute derivative of gamma according to a cosine-decay
             angle = (
-                np.pi * (x - self.initial_time) / (self.final_time - self.initial_time)
+                np.pi
+                * (x - self.initial_time)
+                / abs(self.final_time - self.initial_time)
             )
             gamma_decaying_derivative = -0.5 * np.sin(angle)
 
             return gamma_decaying_derivative
 
         if not isinstance(x, np.ndarray):
-            if x <= self.initial_time or x >= self.final_time:
+            if self.initial_time <= self.final_time:
+                if x <= self.initial_time or x >= self.final_time:
+                    return 0.0
+            elif x >= self.initial_time or x <= self.final_time:
                 return 0.0
 
             gamma_rising_derivative = calc_gamma_rising_derivative(x)
@@ -234,7 +252,15 @@ class CosineDecaySplineHelperDerivative:
 
         # apply decay function only to values that lie between harmonisation
         # time and convergence-time
-        x_decay = np.where(np.logical_and(x > self.initial_time, x < self.final_time))
+        if self.initial_time <= self.final_time:
+            x_decay = np.where(
+                np.logical_and(x > self.initial_time, x < self.final_time)
+            )
+        else:
+            x_decay = np.where(
+                np.logical_and(x < self.initial_time, x > self.final_time)
+            )
+
         gamma_rising_derivative = np.zeros_like(x, dtype=np.floating)
         gamma_rising_derivative[x_decay] = calc_gamma_rising_derivative(x[x_decay])
 
@@ -272,8 +298,8 @@ class CosineDecaySplineHelperDerivative:
 def get_cosine_decay_harmonised_spline(
     harmonisation_time: Union[int, float],
     convergence_time: Union[int, float],
-    harmonised_spline_no_convergence: Spline,
-    convergence_spline: Spline,
+    diverge_from: Spline,
+    harmonisee: Spline,
 ) -> SumOfSplines:
     """
     Generate the harmonised spline based on a cosine-decay
@@ -284,18 +310,18 @@ def get_cosine_decay_harmonised_spline(
         Harmonisation time
 
         This is the time at and before which
-        the solution should be equal to `harmonised_spline_no_convergence`.
+        the solution should be equal to `diverge_from`.
 
     convergence_time
         Convergence time
 
         This is the time at and after which
-        the solution should be equal to `convergence_spline`.
+        the solution should be equal to `harmonisee`.
 
-    harmonised_spline_no_convergence
+    diverge_from
         Harmonised spline that does not consider convergence
 
-    convergence_spline
+    harmonisee
         The spline to which the result should converge
 
     Returns
@@ -308,9 +334,10 @@ def get_cosine_decay_harmonised_spline(
     # first order derivative). Then we use a decay function to let
     # the harmonised spline converge to the convergence-spline.
     # This decay function has the form of a weighted sum:
-    # weight * harmonised_spline + (1-weight) * convergence_spline
+    # weight * diverge_from + (1-weight) * harmonisee
     # With weights decaying from 1 to 0 whereby the decay trajectory
     # is determined by the cosine decay.
+
     return SumOfSplines(
         ProductOfSplines(
             CosineDecaySplineHelper(
@@ -318,7 +345,7 @@ def get_cosine_decay_harmonised_spline(
                 final_time=convergence_time,
                 apply_to_convergence=False,
             ),
-            harmonised_spline_no_convergence,
+            diverge_from,
         ),
         ProductOfSplines(
             CosineDecaySplineHelper(
@@ -326,6 +353,6 @@ def get_cosine_decay_harmonised_spline(
                 final_time=convergence_time,
                 apply_to_convergence=True,
             ),
-            convergence_spline,
+            harmonisee,
         ),
     )

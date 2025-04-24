@@ -54,15 +54,15 @@ def test_get_cosine_decay(harmonisation_time, convergence_time):
         harmonised_spline_first_derivative_only(harmonisation_time),
     )
 
-    harmonised_spline_no_convergence = add_constant_to_spline(
+    diverge_from = add_constant_to_spline(
         in_spline=harmonised_spline_first_derivative_only, constant=diff_spline
     )
 
     harmonised_spline_convergence = get_cosine_decay_harmonised_spline(
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
-        harmonised_spline_no_convergence=harmonised_spline_no_convergence,
-        convergence_spline=harmonisee_spline,
+        diverge_from=diverge_from,
+        harmonisee=harmonisee_spline,
     )
 
     np.testing.assert_allclose(
