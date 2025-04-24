@@ -120,6 +120,7 @@ def harmonise_splines_add_cubic(
     ...    harmonisation_time=harmonisation_time,
     ...    convergence_time=convergence_time
     ...)
+    >>>
 
     >>> _, ax = plt.subplots(figsize=(6, 3))
     >>> for y, name in zip(
