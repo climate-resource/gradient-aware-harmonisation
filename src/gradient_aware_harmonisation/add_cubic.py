@@ -115,12 +115,11 @@ def harmonise_splines_add_cubic(
     >>> harmonised = Timeseries(time_axis=time, values=-0.5 * time + 1)
     >>> harmonisee = Timeseries(time_axis=time, values=0.2 * time**3 - 5)
     >>> cubic_spline = harmonise_splines_add_cubic(
-    ...    diverge_from=harmonised.to_spline(),
-    ...    harmonisee=harmonisee.to_spline(),
-    ...    harmonisation_time=harmonisation_time,
-    ...    convergence_time=convergence_time
-    ...)
-    >>>
+    ...     diverge_from=harmonised.to_spline(),
+    ...     harmonisee=harmonisee.to_spline(),
+    ...     harmonisation_time=harmonisation_time,
+    ...     convergence_time=convergence_time,
+    ... )
 
     >>> _, ax = plt.subplots(figsize=(6, 3))
     >>> for y, name in zip(
