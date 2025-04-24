@@ -153,8 +153,8 @@ class CosineDecaySplineHelper:
 @define
 class CosineDecaySplineHelperDerivative:
     """
-    Derivative of [CosineDecaySplineHelper][(m).]
-    """
+    Derivative of [CosineDecaySplineHelper][gradient_aware_harmonisation.convergence.CosineDecaySplineHelper]
+    """  # noqa: E501
 
     initial_time: Union[float, int]
     """
