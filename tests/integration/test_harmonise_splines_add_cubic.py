@@ -321,7 +321,7 @@ def test_basic_case_harmonisation_time_greater_than_convergence_time():
                  + 0.125x'^2 - 0.25x' + 0.125
                              + 1.5x'  - 1.5
                                       - 0.375
-      = -0.25 (x' + 1)^3 + 0.875(x' + 1)^2 + 0.5x' - 1.5
+      = -0.25 x'^3 + 0.875 x'^2 + 0.5 x' - 1.5
     """
     scipy = pytest.importorskip("scipy")
 
@@ -408,7 +408,7 @@ def test_no_change():
 
     y = x^2 - 2x + 1
 
-    to our harmonisee in other to create our
+    to our harmonisee to create our
     harmonised timeseries over the harmonisation period.
     """
     scipy = pytest.importorskip("scipy")
