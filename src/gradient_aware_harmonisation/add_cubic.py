@@ -126,12 +126,11 @@ def harmonise_splines_add_cubic(
     ...     [harmonised.values, harmonisee.values, cubic_spline(time)],
     ...     ["diverge_from", "harmonisee", "cubic_spline"],
     ... ):
-    ...     ax.plot(time, y, label=name)
-    >>> ax.axvline(harmonisation_time, color="black", linestyle="--")
-    >>> ax.axvline(convergence_time, color="black", linestyle="--")
-    >>> ax.legend()
+    ...     ax.plot(time, y, label=name)  # doctest: +SKIP
+    >>> ax.axvline(harmonisation_time, color="black", linestyle="--")  # doctest: +SKIP
+    >>> ax.axvline(convergence_time, color="black", linestyle="--")  # doctest: +SKIP
+    >>> ax.legend()  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
-    >>> plt.close()
 
     ![](../../../assets/images/cubic_spline.png)
 
