@@ -130,7 +130,8 @@ def harmonise_splines_add_cubic(
     >>> ax.axvline(harmonisation_time, color="black", linestyle="--")
     >>> ax.axvline(convergence_time, color="black", linestyle="--")
     >>> ax.legend()
-    >>> plt.show()
+    >>> plt.show()  # doctest: +SKIP
+    >>> plt.close()
 
     ![](../../../assets/images/cubic_spline.png)
 
