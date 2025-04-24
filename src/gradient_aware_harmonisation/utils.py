@@ -33,8 +33,8 @@ class GetHarmonisedSplineLike(Protocol):
         self,
         harmonisation_time: Union[int, float],
         convergence_time: Union[int, float],
-        harmonised_spline_no_convergence: Spline,
-        convergence_spline: Spline,
+        diverge_from: Spline,
+        harmonisee: Spline,
     ) -> Spline:
         """
         Generate the harmonised spline
@@ -45,18 +45,18 @@ class GetHarmonisedSplineLike(Protocol):
             Harmonisation time
 
             This is the time at and before which
-            the solution should be equal to `harmonised_spline_no_convergence`.
+            the solution should be equal to `diverge_from`.
 
         convergence_time
             Convergence time
 
             This is the time at and after which
-            the solution should be equal to `convergence_spline`.
+            the solution should be equal to `harmonisee`.
 
-        harmonised_spline_no_convergence
+        diverge_from
             Harmonised spline that does not consider convergence
 
-        convergence_spline
+        harmonisee
             The spline to which the result should converge
 
         Returns
@@ -133,15 +133,15 @@ def harmonise_splines(  # noqa: PLR0913
         harmonised_spline_first_derivative_only(harmonisation_time),
     )
 
-    harmonised_spline_no_convergence = add_constant_to_spline(
+    diverge_from = add_constant_to_spline(
         in_spline=harmonised_spline_first_derivative_only, constant=diff_spline
     )
 
     harmonised_spline = get_harmonised_spline(
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
-        harmonised_spline_no_convergence=harmonised_spline_no_convergence,
-        convergence_spline=converge_to,
+        diverge_from=diverge_from,
+        harmonisee=converge_to,
     )
 
     return harmonised_spline

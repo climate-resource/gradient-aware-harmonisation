@@ -272,8 +272,8 @@ class CosineDecaySplineHelperDerivative:
 def get_cosine_decay_harmonised_spline(
     harmonisation_time: Union[int, float],
     convergence_time: Union[int, float],
-    harmonised_spline_no_convergence: Spline,
-    convergence_spline: Spline,
+    diverge_from: Spline,
+    harmonisee: Spline,
 ) -> SumOfSplines:
     """
     Generate the harmonised spline based on a cosine-decay
@@ -284,18 +284,18 @@ def get_cosine_decay_harmonised_spline(
         Harmonisation time
 
         This is the time at and before which
-        the solution should be equal to `harmonised_spline_no_convergence`.
+        the solution should be equal to `diverge_from`.
 
     convergence_time
         Convergence time
 
         This is the time at and after which
-        the solution should be equal to `convergence_spline`.
+        the solution should be equal to `harmonisee`.
 
-    harmonised_spline_no_convergence
+    diverge_from
         Harmonised spline that does not consider convergence
 
-    convergence_spline
+    harmonisee
         The spline to which the result should converge
 
     Returns
@@ -308,7 +308,7 @@ def get_cosine_decay_harmonised_spline(
     # first order derivative). Then we use a decay function to let
     # the harmonised spline converge to the convergence-spline.
     # This decay function has the form of a weighted sum:
-    # weight * harmonised_spline + (1-weight) * convergence_spline
+    # weight * diverge_from + (1-weight) * harmonisee
     # With weights decaying from 1 to 0 whereby the decay trajectory
     # is determined by the cosine decay.
     return SumOfSplines(
@@ -318,7 +318,7 @@ def get_cosine_decay_harmonised_spline(
                 final_time=convergence_time,
                 apply_to_convergence=False,
             ),
-            harmonised_spline_no_convergence,
+            diverge_from,
         ),
         ProductOfSplines(
             CosineDecaySplineHelper(
@@ -326,6 +326,6 @@ def get_cosine_decay_harmonised_spline(
                 final_time=convergence_time,
                 apply_to_convergence=True,
             ),
-            convergence_spline,
+            harmonisee,
         ),
     )
