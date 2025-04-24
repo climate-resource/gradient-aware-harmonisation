@@ -72,3 +72,47 @@ def test_harmonisation_convergence_times(harmonisation_time, convergence_time):
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
     )
+
+
+def test_harmonisation_time_greater_than_convergence_time():
+    scipy = pytest.importorskip("scipy")
+
+    harmonisation_time = 1.0
+    convergence_time = -1.0
+
+    # y = x
+    # TODO: from left-edge or something here
+    diverge_from = SplineScipy(
+        scipy.interpolate.PPoly(
+            # These are the constants you need given how PPoly is defined
+            # (it's basically y = f(x - x_le),
+            # where x_le is the left-edge of the boundary)
+            c=[[1.0], [-10.0]],
+            x=[-10.0, 10.0],
+        )
+    )
+    assert diverge_from(harmonisation_time) == 1.0
+
+    # y = 0.5x - 1
+    harmonisee = SplineScipy(
+        scipy.interpolate.PPoly(
+            c=[[0.5], [-6.0]],
+            x=[-10.0, 10.0],
+        )
+    )
+    assert harmonisee(convergence_time) == -1.5
+
+    res = get_cosine_decay_harmonised_spline(
+        diverge_from=diverge_from,
+        harmonisee=harmonisee,
+        harmonisation_time=harmonisation_time,
+        convergence_time=convergence_time,
+    )
+
+    check_expected_continuity(
+        solution=res,
+        diverge_from=diverge_from,
+        harmonisee=harmonisee,
+        harmonisation_time=harmonisation_time,
+        convergence_time=convergence_time,
+    )
