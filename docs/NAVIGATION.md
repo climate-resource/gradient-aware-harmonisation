@@ -8,6 +8,7 @@ See https://oprypin.github.io/mkdocs-literate-nav/
 - [Installation](installation.md)
 - [How-to guides](how-to-guides/index.md)
     - [Do a basic calculation](how-to-guides/basic-calculation.md)
+    - [Use a cubic spline for harmonisation](how-to-guides/cubic_spline.py)
 - [Tutorials](tutorials/index.md)
     - [Getting Started](tutorials/tutorial.py)
 - [Further background](further-background/index.md)
