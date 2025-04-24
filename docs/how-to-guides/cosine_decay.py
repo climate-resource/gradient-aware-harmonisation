@@ -13,11 +13,11 @@
 # ---
 
 # %% [markdown]
-# # How to use a cubic-spline as harmonisation of two functions?
-# In this tutorial, we present use cases for applying a cubic-spline
+# # How to use cosine weight-decay as harmonisation of two functions?
+# In this tutorial, we present use cases for applying cosine-weight decay
 # to harmonise two functions which we will call in the following
 # `diverge_from` and `harmonisee`.
-# The `cubic-spline` interpolates between `diverge_from` and `harmonisee`.
+# The `cosine-weight-decay` interpolates between `diverge_from` and `harmonisee`.
 
 
 # %%
@@ -28,9 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate
 
-from gradient_aware_harmonisation.add_cubic import (
-    harmonise_splines_add_cubic,
-)
+from gradient_aware_harmonisation.convergence import get_cosine_decay_harmonised_spline
 from gradient_aware_harmonisation.spline import SplineScipy
 
 # %% [markdown]
@@ -92,7 +90,7 @@ for y_intercept_shift in [0.0, -1.2, 1.2]:
             )
         )
 
-        res = harmonise_splines_add_cubic(
+        res = get_cosine_decay_harmonised_spline(
             diverge_from=diverge_from,
             harmonisee=harmonisee,
             harmonisation_time=harmonisation_time,
@@ -128,14 +126,14 @@ for y_intercept_shift in [0.0, -1.2, 1.2]:
             harmonisee.derivative(),
             np.linspace(harmonisation_time, 2 * convergence_time, 101),
             ax=axes[1],
-            label="harmonisee_gradien",
+            label="harmonisee",
             gradient=True,
         )
         plot_spline(
             res.derivative(),
             np.linspace(harmonisation_time, 2 * convergence_time, 101),
             ax=axes[1],
-            label="cubic-spline",
+            label="cosine_weight_decay",
             gradient=True,
         )
 
@@ -159,6 +157,15 @@ for y_intercept_shift in [0.0, -1.2, 1.2]:
         plt.show()
         i = i + 1
 
+# %% [markdown]
+# ### Harmonisation time > convergence time
+# In the following, we consider the same nine scenarios as
+# above in which the `harmonisee` spline differs
+# from the `diverge_from` spline due to varying shifts in the
+# intercept ([0.0, -1.2, 1.2]) and slope ([1.0, 0.7, 1.4]).
+# However, this time we consider in all upcoming scenarios
+# harmonisation time (=1.0) > convergence time (=-1.0).
+
 # %%
 diverge_from_gradient = 2.5
 diverge_from_y_intercept = 1.0
@@ -173,15 +180,6 @@ diverge_from = SplineScipy(
         x=[-10.0, 10.0],
     )
 )
-
-# %% [markdown]
-# ### Harmonisation time > convergence time
-# In the following, we consider the same nine scenarios as
-# above in which the `harmonisee` spline differs
-# from the `diverge_from` spline due to varying shifts in the
-# intercept ([0.0, -1.2, 1.2]) and slope ([1.0, 0.7, 1.4]).
-# However, this time we consider in all upcoming scenarios
-# harmonisation time (=1.0) > convergence time (=-1.0).
 
 # %%
 harmonisation_time = 1.0
@@ -206,7 +204,7 @@ for y_intercept_shift in [0.0, -1.2, 1.2]:
             )
         )
 
-        res = harmonise_splines_add_cubic(
+        res = get_cosine_decay_harmonised_spline(
             diverge_from=diverge_from,
             harmonisee=harmonisee,
             harmonisation_time=harmonisation_time,
@@ -249,7 +247,7 @@ for y_intercept_shift in [0.0, -1.2, 1.2]:
             res.derivative(),
             np.linspace(harmonisation_time, 2 * convergence_time, 101),
             ax=axes[1],
-            label="cubic-spline",
+            label="cosine_weight_decay",
             gradient=True,
         )
 

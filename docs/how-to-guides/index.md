@@ -5,3 +5,4 @@ focuses on a **problem-oriented** approach.
 We'll go over how to solve common tasks.
 
 + [How can I use a cubic spline for harmonisation?](cubic_spline)
++ [How can I use a cosine-weight-decay for harmonisation?](cosine_decay)

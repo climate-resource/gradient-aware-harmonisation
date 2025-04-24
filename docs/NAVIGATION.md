@@ -9,6 +9,7 @@ See https://oprypin.github.io/mkdocs-literate-nav/
 - [How-to guides](how-to-guides/index.md)
     - [Do a basic calculation](how-to-guides/basic-calculation.md)
     - [Use a cubic spline for harmonisation](how-to-guides/cubic_spline.py)
+    - [Use a cosine-weight decay for harmonisation](how-to-guides/cosine_decay.py)
 - [Tutorials](tutorials/index.md)
     - [Getting Started](tutorials/tutorial.py)
 - [Further background](further-background/index.md)
