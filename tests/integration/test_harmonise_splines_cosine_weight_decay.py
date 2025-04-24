@@ -60,7 +60,7 @@ def test_harmonisation_convergence_times(harmonisation_time, convergence_time):
 
     res = get_cosine_decay_harmonised_spline(
         diverge_from=diverge_from,
-        convergence_spline=harmonisee,
+        harmonisee=harmonisee,
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
     )

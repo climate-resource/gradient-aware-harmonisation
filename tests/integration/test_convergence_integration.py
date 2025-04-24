@@ -184,13 +184,13 @@ def test_get_cosine_decay_harmonised_spline():
     x_up_to_harmonisation_time = np.linspace(x_min, harmonisation_time, 50)
     x_after_convergence_time = np.linspace(convergence_time, x_max, 50)
 
-    harmonised_spline_no_convergence = SplineScipy(
+    diverge_from = SplineScipy(
         scipy.interpolate.PPoly(
             x=[x_min, x_max],
             c=[[1], [0], [0], [0]],  # y=x^3
         )
     )
-    convergence_spline = SplineScipy(
+    harmonisee = SplineScipy(
         scipy.interpolate.PPoly(
             x=[x_min, x_max],
             c=[[-1], [1], [2]],  # y=-x^2 + x + 2
@@ -200,17 +200,17 @@ def test_get_cosine_decay_harmonised_spline():
     res = get_cosine_decay_harmonised_spline(
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
-        harmonised_spline_no_convergence=harmonised_spline_no_convergence,
-        convergence_spline=convergence_spline,
+        diverge_from=diverge_from,
+        harmonisee=harmonisee,
     )
 
     np.testing.assert_equal(
-        harmonised_spline_no_convergence(x_up_to_harmonisation_time),
+        diverge_from(x_up_to_harmonisation_time),
         res(x_up_to_harmonisation_time),
     )
 
     np.testing.assert_equal(
-        convergence_spline(x_after_convergence_time),
+        harmonisee(x_after_convergence_time),
         res(x_after_convergence_time),
     )
 
@@ -218,18 +218,11 @@ def test_get_cosine_decay_harmonised_spline():
     np.testing.assert_equal(
         np.array(
             [
-                0.5
-                * (1.0 + np.cos(np.pi * 0.5 / 6.0))
-                * harmonised_spline_no_convergence(3.0)
-                + (1.0 - 0.5 * (1.0 + np.cos(np.pi * 0.5 / 6.0)))
-                * convergence_spline(3.0),
-                0.5 * harmonised_spline_no_convergence(5.5)
-                + 0.5 * convergence_spline(5.5),
-                0.5
-                * (1.0 + np.cos(np.pi * 3.5 / 6.0))
-                * harmonised_spline_no_convergence(6.0)
-                + (1.0 - 0.5 * (1.0 + np.cos(np.pi * 3.5 / 6.0)))
-                * convergence_spline(6.0),
+                0.5 * (1.0 + np.cos(np.pi * 0.5 / 6.0)) * diverge_from(3.0)
+                + (1.0 - 0.5 * (1.0 + np.cos(np.pi * 0.5 / 6.0))) * harmonisee(3.0),
+                0.5 * diverge_from(5.5) + 0.5 * harmonisee(5.5),
+                0.5 * (1.0 + np.cos(np.pi * 3.5 / 6.0)) * diverge_from(6.0)
+                + (1.0 - 0.5 * (1.0 + np.cos(np.pi * 3.5 / 6.0))) * harmonisee(6.0),
             ]
         ),
         res(np.array([3.0, 5.5, 6.0])),

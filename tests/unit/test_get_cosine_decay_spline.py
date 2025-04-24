@@ -62,7 +62,7 @@ def test_get_cosine_decay(harmonisation_time, convergence_time):
         harmonisation_time=harmonisation_time,
         convergence_time=convergence_time,
         diverge_from=diverge_from,
-        convergence_spline=harmonisee_spline,
+        harmonisee=harmonisee_spline,
     )
 
     np.testing.assert_allclose(
