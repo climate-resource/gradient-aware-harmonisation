@@ -54,10 +54,10 @@ diverge_from = SplineScipy(
 # ### Harmonisation time < convergence time
 # In the following, we consider nine scenarios in which the
 # `harmonisee` spline differs from the `diverge_from` spline
-# due to varying shifts in the intercept ([0.0, -1.2, 1.2])
-# and slope ([1.0, 0.7, 1.4]).
+# due to varying shifts in the intercept (`[0.0, -1.2, 1.2]`)
+# and slope (`[1.0, 0.7, 1.4]`).
 # In all of these scenarios we consider harmonisation time
-# (=0) < convergence time (=3.2).
+# (`=0`) < convergence time (`=3.2`).
 
 # %%
 harmonisation_time = 0.0
