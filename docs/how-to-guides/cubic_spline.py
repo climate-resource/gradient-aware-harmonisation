@@ -164,9 +164,9 @@ for y_intercept_shift in [0.0, -1.2, 1.2]:
 # In the following, we consider the same nine scenarios as
 # above in which the `harmonisee` spline differs
 # from the `diverge_from` spline due to varying shifts in the
-# intercept ([0.0, -1.2, 1.2]) and slope ([1.0, 0.7, 1.4]).
-# However, this time we consider in all upcoming scenarios
-# harmonisation time (=1.0) > convergence time (=-1.0).
+# intercept (`[0.0, -1.2, 1.2]`) and slope (`[1.0, 0.7, 1.4]`).
+# However, this time we consider 
+# harmonisation time (`=1.0`) > convergence time (`=-1.0`).
 
 # %%
 diverge_from_gradient = 2.5
