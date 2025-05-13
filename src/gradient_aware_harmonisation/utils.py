@@ -18,6 +18,7 @@ from gradient_aware_harmonisation.spline import (
     SplineScipy,
     SumOfSplines,
 )
+from gradient_aware_harmonisation.typing import NP_FLOAT_OR_INT, PINT_SCALAR
 
 
 class GetHarmonisedSplineLike(Protocol):
@@ -185,3 +186,31 @@ def add_constant_to_spline(in_spline: Spline, constant: float | int) -> Spline:
             )
         ),
     )
+
+
+def validate_domain(
+    domain: Union[
+        tuple[PINT_SCALAR, PINT_SCALAR], tuple[NP_FLOAT_OR_INT, NP_FLOAT_OR_INT]
+    ],
+) -> None:
+    """
+    Check that domain values are valid
+
+    Parameters
+    ----------
+    domain
+        Domain to check
+
+    Raises
+    ------
+    AssertionError
+        `len(domain) != 2` or `domain[1] <= domain[0]`.
+    """
+    expected_domain_length = 2
+    if len(domain) != expected_domain_length:
+        raise AssertionError(len(domain))
+
+    if domain[1] <= domain[0]:
+        msg = f"domain[1] must be greater than domain[0]. Received {domain=}."
+
+        raise AssertionError(msg)
