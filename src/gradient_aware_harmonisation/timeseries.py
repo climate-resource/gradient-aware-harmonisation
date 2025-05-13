@@ -76,5 +76,4 @@ class Timeseries:
             scipy.interpolate.make_interp_spline(
                 x=self.time_axis, y=self.values, **kwargs
             ),
-            # domain=(self.time_axis.min(), self.time_axis.max())
         )
